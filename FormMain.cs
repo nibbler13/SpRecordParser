@@ -4,11 +4,11 @@ using System.Threading;
 using System.Windows.Forms;
 
 namespace SpRecordParser {
-	public partial class Form1 : Form {
+	public partial class FormMain : Form {
 		Thread parsingThread;
 		List<string> selectedFiles;
 
-		public Form1() {
+		public FormMain() {
 			InitializeComponent();
 
 			listViewFiles.ItemSelectionChanged += ListViewFiles_ItemSelectionChanged;

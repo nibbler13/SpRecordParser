@@ -12,19 +12,21 @@ namespace SpRecordParser {
 		private ProgressBar progressBar;
 		private TextBox textBox;
 		private Dictionary<string, SpRecordFileInformation> filesInfo;
+		private int percentageCompleted;
 
 		public FileParser(ProgressBar progressBar, TextBox textBox) {
 			this.progressBar = progressBar;
 			this.textBox = textBox;
 			filesInfo = new Dictionary<string, SpRecordFileInformation>();
+			percentageCompleted = 0;
 		}
 
 		public void ParseFiles(List<string> fileNames) {
 			UpdateTextBox("Начало анализа");
 
-
+			int oneFileProgress = 90 / fileNames.Count;
 			foreach (string fileName in fileNames) {
-				UpdateTextBox("Файл:" + fileName);
+				UpdateTextBox("Файл:" + fileName, newSection: true);
 				if (!IsFileExistAndNotEmpty(fileName)) {
 					UpdateTextBox("Файл не существует или пустой", error: true);
 					continue;
@@ -38,13 +40,23 @@ namespace SpRecordParser {
 				}
 
 				AnalyseFileContentAndAddToDictionary(fileName, fileContent);
+				percentageCompleted += oneFileProgress;
+				UpdateProgressBar(percentageCompleted);
 			}
 
-			MessageBox.Show("Завершено");
+			if (filesInfo.Count == 0) {
+				MessageBox.Show("Результирующий файл пуст", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			}
+
+			UpdateTextBox("Выгрузка данных в Excel", newSection: true);
+			ExcelWriter.WriteToExcel(filesInfo);
+
+			UpdateProgressBar(100);
+
+			MessageBox.Show("Анализ завершен", "SpRecordParser", MessageBoxButtons.OK, MessageBoxIcon.Information);
 		}
 
-		private void AnalyseFileContentAndAddToDictionary(
-			string fileName, List<List<string>> fileContent) {
+		private void AnalyseFileContentAndAddToDictionary(string fileName, List<List<string>> fileContent) {
 			if (filesInfo.ContainsKey(fileName)) {
 				UpdateTextBox("Файл уже проанализирован ранее");
 				return;
@@ -84,38 +96,217 @@ namespace SpRecordParser {
 
 					if (text.StartsWith("Отчет создан"))
 						ParseLineCreationDate(text, ref fileInformation);
-				} else if (line.Count == 9) {
+				} else if (line.Count >= 9) {
+					if (line[0].Equals("Название канала"))
+						continue;
 
+					TimeSpan duration = ParseTimeSpan(line[2]);
+					string type = line[3];
+
+					switch (type) {
+						case "Принятый":
+							fileInformation.callsAccepted++;
+							fileInformation.timeAccepted = fileInformation.timeAccepted.Add(duration);
+							break;
+						case "Набранный":
+							fileInformation.callsDialed++;
+							fileInformation.timeDialed = fileInformation.timeDialed.Add(duration);
+							break;
+						case "Непринятый":
+							if (duration.TotalSeconds <= 5) {
+								fileInformation.callsAccidential++;
+								fileInformation.timeAccidential = fileInformation.timeAccidential.Add(duration);
+								fileContent[row].Add("Accidential");
+							} else {
+								fileInformation.callsMissed++;
+								fileInformation.timeMissed = fileInformation.timeMissed.Add(duration);
+								AnalyseMissedCall(row, ref fileInformation, ref fileContent);
+							}
+							break;
+						default:
+							UpdateTextBox("Неизвестный тип звонка: " + type);
+							break;
+					}
 				} else {
 					UpdateTextBox("Размер строки " + (row + 1) + " не совпадает с форматом SpRecord");
 				}
 			}
 
-
-
-
-
-
-
-
-
-
-
-			for (int row = fileContent.Count - 2; row >= 0; row--) {
-				if (row == fileContent.Count - 1) {
-
-				}
-			}
-
-
-
+			fileInformation.fileContent = fileContent;
 			filesInfo.Add(fileName, fileInformation);
 		}
 
-		private void ParseLineCreationDate(string text, ref SpRecordFileInformation fileInformation) {
+		private void AnalyseMissedCall(
+			int row, ref SpRecordFileInformation fileInformation, ref List<List<string>> fileContent) {
+			//UpdateTextBox("Анализ пропущенного звонка, строка: " + (row + 1) + Environment.NewLine +
+			//	string.Join(";", fileContent[row]));
+
+			DateTime missedTime;
+			if (!DateTime.TryParse(fileContent[row][1], out missedTime)) {
+				fileContent[row].Add("Invalid date/time");
+				UpdateTextBox("Не удалось разобрать время звонка, строка: " + (row + 1) +
+					" значение: " + fileContent[row][1]);
+				return;
+			}
+
+			string[] phoneNumbers = SplitPhoneNumbers(fileContent[row][4]);
+			string callerNumber = phoneNumbers[0];
+
+			if (string.IsNullOrEmpty(callerNumber)) {
+				fileContent[row].Add("Wrong caller phone number");
+				UpdateTextBox("Номер звонившего не удалось определить");
+				return;
+			}
+
+			//надо проверять номера телефонов без кода города
+			//мобильные без 8 спереди
 			try {
-				int colonSymbol = text.IndexOf(":");
-				string creationDate = text.Substring(colonSymbol + 2, text.Length - colonSymbol - 3);
+				if (callerNumber.StartsWith("89")) {
+					callerNumber = callerNumber.Substring(1);
+				} else {
+					callerNumber = callerNumber.Substring(callerNumber.Length - 7);
+				}
+			} catch (Exception e) {
+				LoggingSystem.LogMessageToFile(e.Message);
+				LoggingSystem.LogMessageToFile(e.StackTrace);
+			}
+
+			int callBackTries = 0;
+			bool regulationsObserved = true;
+			bool registryCallBackSucceded = false;
+			bool conversationTookPlace = false;
+			DateTime lastCallTime = missedTime;
+
+			for (int i = row - 1; i >= 0; i--) {
+				if (fileContent[i].Count < 9)
+					break;
+
+				if (fileContent[i][0].Equals("Название канала"))
+					break;
+
+				DateTime callDate;
+				if (!DateTime.TryParse(fileContent[i][1], out callDate)) {
+					UpdateTextBox("Не удалось разобрать время звонка, строка: " + (i + 1) + 
+						" значение: " + fileContent[i][1]);
+					continue;
+				}
+				
+				if (!missedTime.Date.Equals(callDate.Date))
+					break;
+
+				string callPhoneNumbers = fileContent[i][4];
+				if (!callPhoneNumbers.Contains(callerNumber))
+					continue;
+				
+				lastCallTime = callDate;
+
+				string callType = fileContent[i][3];
+
+				if (callType.Equals("Непринятый"))
+					break;
+				
+				fileContent[i].Add("Связка с пропущенным звонком");
+				fileContent[i].Add("Строка: " + (row + 1));
+
+				if (callType.Equals("Принятый")) {
+					conversationTookPlace = true;
+					break;
+				} else if (callType.Equals("Набранный")) {
+					string comment = fileContent[row][8];
+					if (comment.Equals("Вызываемый абонент не ответил.")) {
+						callBackTries++;
+
+						double minutesAfterMissedCall = callDate.Subtract(missedTime).TotalMinutes;
+						if (callBackTries == 1 && minutesAfterMissedCall > 5.0 ||
+							callBackTries == 2 && minutesAfterMissedCall > 20.0 ||
+							callBackTries == 3 && minutesAfterMissedCall > 35.0)
+							regulationsObserved = false;
+					} else {
+						conversationTookPlace = true;
+						registryCallBackSucceded = true;
+						break;
+					}
+				}
+			}
+
+			string result = "";
+
+			if (!conversationTookPlace) {
+				result = "Разговор с пациентом не состоялся, ";
+				fileInformation.callsBackNot++;
+
+				if (callBackTries == 0) {
+					regulationsObserved = false;
+					result += "пациенту не пытались перезвонить";
+				} else if (callBackTries < 3) {
+					regulationsObserved = false;
+					result += "пациенту пытались перезвонить менее 3 раз";
+				} else {
+					result += "пациенту пытались перезвонить 3 или более раз";
+				}
+			} else {
+				double minutesAfterMissedCall = lastCallTime.Subtract(missedTime).TotalMinutes;
+				if (callBackTries == 0 && minutesAfterMissedCall > 5.0 ||
+					callBackTries == 1 && minutesAfterMissedCall > 20.0 ||
+					callBackTries == 2 && minutesAfterMissedCall > 35.0)
+					regulationsObserved = false;
+
+				if (registryCallBackSucceded) {
+					result = "Регистратура перезвонила пациенту";
+					fileInformation.callsBackByRegistry++;
+				} else {
+					result = "Пациент перезвонил самостоятельно";
+					fileInformation.callsBackByPatient++;
+				}
+			}
+
+			if (regulationsObserved) {
+				fileInformation.missedCallsRegulationObserved++;
+				result += ", регламент соблюден";
+			} else {
+				fileInformation.missedCallsRegulationNotObserved++;
+				result += ", регламент нарушен";
+			}
+
+			fileContent[row].Add(result);
+		}
+
+		private string[] SplitPhoneNumbers(string str) {
+			string[] phoneNumbers = new string[2];
+
+			if (!str.Contains(" -> "))
+				return phoneNumbers;
+
+			try {
+				phoneNumbers = str.Split(new[] { " -> " }, StringSplitOptions.None);
+			} catch (Exception e) {
+				UpdateTextBox("Не удалось разобрать номера телефонов: " + str);
+			}
+
+			return phoneNumbers;
+		}
+
+		private TimeSpan ParseTimeSpan(string str) {
+			TimeSpan timeSpan = new TimeSpan();
+
+			try {
+				string[] splitted = str.Split(':');
+				timeSpan = new TimeSpan(
+					int.Parse(splitted[0]), 
+					int.Parse(splitted[1]), 
+					int.Parse(splitted[2]));
+			} catch (Exception e) {
+				UpdateTextBox("Не удалось разобрать строку со временем: " + str +
+					Environment.NewLine + "Ошибка: " + e.Message + " " + e.StackTrace);
+			}
+
+			return timeSpan;
+		}
+
+		private void ParseLineCreationDate(string str, ref SpRecordFileInformation fileInformation) {
+			try {
+				int colonSymbol = str.IndexOf(":");
+				string creationDate = str.Substring(colonSymbol + 2, str.Length - colonSymbol - 3);
 				fileInformation.creationDate = creationDate;
 				UpdateTextBox("Дата создания списка: " + creationDate);
 			} catch (Exception e) {
@@ -124,10 +315,10 @@ namespace SpRecordParser {
 			}
 		}
 
-		private void ParseLineWorkstation(string text, ref SpRecordFileInformation fileInformation) {
+		private void ParseLineWorkstation(string str, ref SpRecordFileInformation fileInformation) {
 			try {
-				int colonSymbol = text.IndexOf(":");
-				string workstationName = text.Substring(colonSymbol + 2, text.Length - colonSymbol - 3);
+				int colonSymbol = str.IndexOf(":");
+				string workstationName = str.Substring(colonSymbol + 2, str.Length - colonSymbol - 3);
 				fileInformation.workstationName = workstationName;
 				UpdateTextBox("Рабочая станция: " + workstationName);
 			} catch (Exception e) {
@@ -136,10 +327,10 @@ namespace SpRecordParser {
 			}
 		}
 
-		private void ParseLineAccountingPeriod(string text, ref SpRecordFileInformation fileInformation) {
+		private void ParseLineAccountingPeriod(string str, ref SpRecordFileInformation fileInformation) {
 			try {
-				int mark = text.IndexOf("записи");
-				string accountingPeriod = text.Substring(mark + 7, text.Length - mark - 7);
+				int mark = str.IndexOf("записи");
+				string accountingPeriod = str.Substring(mark + 7, str.Length - mark - 7);
 				fileInformation.accountingPeriod = accountingPeriod;
 				UpdateTextBox("Период отчета: " + accountingPeriod);
 			} catch (Exception e) {
@@ -148,13 +339,13 @@ namespace SpRecordParser {
 			}
 		}
 
-		private SpRecordFileInformation ParseLastRow(string lastRowText) {
+		private SpRecordFileInformation ParseLastRow(string str) {
 			SpRecordFileInformation fileInformation = new SpRecordFileInformation();
 
 			try {
-				int colonSymbol = lastRowText.IndexOf(":");
-				int dotSymbol = lastRowText.IndexOf('.');
-				string totalRecordsText = lastRowText.Substring(
+				int colonSymbol = str.IndexOf(":");
+				int dotSymbol = str.IndexOf('.');
+				string totalRecordsText = str.Substring(
 					colonSymbol + 2, dotSymbol - colonSymbol - 2);
 
 				int totalRecords = 0;
@@ -163,11 +354,11 @@ namespace SpRecordParser {
 
 				fileInformation.callsTotal = totalRecords;
 
-				int secondColonSymbol = lastRowText.IndexOf("ть:");
-				string totalTimeText = lastRowText.Substring(secondColonSymbol + 4,
-					lastRowText.Length - secondColonSymbol - 4);
+				int secondColonSymbol = str.IndexOf("ть:");
+				string totalTimeText = str.Substring(secondColonSymbol + 4,
+					str.Length - secondColonSymbol - 4);
 
-				fileInformation.timeTotal = totalTimeText;
+				fileInformation.timeTotal = ParseTimeSpan(totalTimeText);
 			} catch (Exception e) {
 				UpdateTextBox("Не удалось выполнить разбор последней строки" +
 					Environment.NewLine + "Ошибка: " + e.Message + " " + e.StackTrace, error: true);
@@ -177,16 +368,17 @@ namespace SpRecordParser {
 		}
 
 		private void UpdateProgressBar(int percentage) {
-			if (progressBar == null) return;
+			if (progressBar == null)
+				return;
+			if (percentage > 100)
+				percentage = 100;
+
 			progressBar.BeginInvoke((MethodInvoker)delegate {
 				progressBar.Value = percentage;
 			});
 		}
 
-		private void UpdateTextBox(
-			string message, 
-			bool newSection = false, 
-			bool error = false) {
+		private void UpdateTextBox(string message,  bool newSection = false,  bool error = false) {
 			if (textBox == null) return;
 			textBox.BeginInvoke((MethodInvoker)delegate {
 				if (newSection)
@@ -200,6 +392,8 @@ namespace SpRecordParser {
 				textBox.AppendText(DateTime.Now.ToString("HH:mm:ss") + ": " + 
 					message + Environment.NewLine);
 			});
+
+			LoggingSystem.LogMessageToFile(message);
 		}
 
 		private List<List<string>> GetCsvFileContent(string filePath) {

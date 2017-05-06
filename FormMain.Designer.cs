@@ -1,5 +1,5 @@
 ﻿namespace SpRecordParser {
-	partial class Form1 {
+	partial class FormMain {
 		/// <summary>
 		/// Обязательная переменная конструктора.
 		/// </summary>
@@ -116,6 +116,7 @@
 			this.textBox.Location = new System.Drawing.Point(12, 12);
 			this.textBox.Multiline = true;
 			this.textBox.Name = "textBox";
+			this.textBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
 			this.textBox.Size = new System.Drawing.Size(389, 434);
 			this.textBox.TabIndex = 9;
 			this.textBox.Visible = false;
