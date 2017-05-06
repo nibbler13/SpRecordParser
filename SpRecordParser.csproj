@@ -48,6 +48,7 @@
   <ItemGroup>
     <Compile Include="ExcelWriter.cs" />
     <Compile Include="LoggingSystem.cs" />
+    <Compile Include="Settings.cs" />
     <Compile Include="SpRecordFileInformation.cs" />
     <Compile Include="FileParser.cs" />
     <Compile Include="FormMain.cs">

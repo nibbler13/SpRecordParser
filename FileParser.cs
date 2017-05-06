@@ -24,7 +24,7 @@ namespace SpRecordParser {
 		public void ParseFiles(List<string> fileNames) {
 			UpdateTextBox("Начало анализа");
 
-			int oneFileProgress = 90 / fileNames.Count;
+			int oneFileProgress = 20 / fileNames.Count;
 			foreach (string fileName in fileNames) {
 				UpdateTextBox("Файл:" + fileName, newSection: true);
 				if (!IsFileExistAndNotEmpty(fileName)) {
@@ -45,15 +45,28 @@ namespace SpRecordParser {
 			}
 
 			if (filesInfo.Count == 0) {
-				MessageBox.Show("Результирующий файл пуст", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				MessageBox.Show(
+					"Результирующий файл пуст", "Ошибка", 
+					MessageBoxButtons.OK, MessageBoxIcon.Error);
+				return;
 			}
 
+			UpdateProgressBar(20);
 			UpdateTextBox("Выгрузка данных в Excel", newSection: true);
-			ExcelWriter.WriteToExcel(filesInfo);
+
+			ExcelWriter excelWriter = new ExcelWriter(progressBar, textBox, filesInfo);
+			if (!excelWriter.WriteToExcel()) {
+				MessageBox.Show(
+					"Обработка данных завершена с ошибкой", "SpRecordParser", 
+					MessageBoxButtons.OK, MessageBoxIcon.Error);
+				return;
+			}
 
 			UpdateProgressBar(100);
 
-			MessageBox.Show("Анализ завершен", "SpRecordParser", MessageBoxButtons.OK, MessageBoxIcon.Information);
+			MessageBox.Show(
+				"Обработка данных завершена успешно", "SpRecordParser",
+				MessageBoxButtons.OK, MessageBoxIcon.Information);
 		}
 
 		private void AnalyseFileContentAndAddToDictionary(string fileName, List<List<string>> fileContent) {
@@ -280,6 +293,8 @@ namespace SpRecordParser {
 			try {
 				phoneNumbers = str.Split(new[] { " -> " }, StringSplitOptions.None);
 			} catch (Exception e) {
+				LoggingSystem.LogMessageToFile(e.Message);
+				LoggingSystem.LogMessageToFile(e.StackTrace);
 				UpdateTextBox("Не удалось разобрать номера телефонов: " + str);
 			}
 
