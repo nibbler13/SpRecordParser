@@ -98,6 +98,12 @@ namespace SpRecordParser {
 
 			for (int row = fileContent.Count - 2; row >= 0; row--) {
 				List<string> line = fileContent[row];
+
+				if (line.Count < 9 && line.Count != 1) {
+					UpdateTextBox("Размер строки " + (row + 1) + " не совпадает с форматом SpRecord");
+					continue;
+				}
+
 				if (line.Count == 1) {
 					string text = line[0];
 
@@ -109,39 +115,34 @@ namespace SpRecordParser {
 
 					if (text.StartsWith("Отчет создан"))
 						ParseLineCreationDate(text, ref fileInformation);
-				} else if (line.Count >= 9) {
+				}
+
+				if (line.Count >= 9) {
 					if (line[0].Equals("Название канала"))
 						continue;
 
 					TimeSpan duration = ParseTimeSpan(line[2]);
 					string type = line[3];
 
-					switch (type) {
-						case "Принятый":
-							fileInformation.callsAccepted++;
-							fileInformation.timeAccepted = fileInformation.timeAccepted.Add(duration);
-							break;
-						case "Набранный":
-							fileInformation.callsDialed++;
-							fileInformation.timeDialed = fileInformation.timeDialed.Add(duration);
-							break;
-						case "Непринятый":
-							if (duration.TotalSeconds <= 5) {
-								fileInformation.callsAccidential++;
-								fileInformation.timeAccidential = fileInformation.timeAccidential.Add(duration);
-								fileContent[row].Add("Accidential");
-							} else {
-								fileInformation.callsMissed++;
-								fileInformation.timeMissed = fileInformation.timeMissed.Add(duration);
-								AnalyseMissedCall(row, ref fileInformation, ref fileContent);
-							}
-							break;
-						default:
-							UpdateTextBox("Неизвестный тип звонка: " + type);
-							break;
+					if (type.Contains("Принятый")) {
+						fileInformation.callsAccepted++;
+						fileInformation.timeAccepted = fileInformation.timeAccepted.Add(duration);
+					} else if (type.Contains("Набранный")) {
+						fileInformation.callsDialed++;
+						fileInformation.timeDialed = fileInformation.timeDialed.Add(duration);
+					} else if (type.Contains("Непринятый")) {
+						if (duration.TotalSeconds <= 5) {
+							fileInformation.callsAccidential++;
+							fileInformation.timeAccidential = fileInformation.timeAccidential.Add(duration);
+							fileContent[row].Add("Ошибочный");
+						} else {
+							fileInformation.callsMissed++;
+							fileInformation.timeMissed = fileInformation.timeMissed.Add(duration);
+							AnalyseMissedCall(row, ref fileInformation, ref fileContent);
+						}
+					} else {
+						UpdateTextBox("Неизвестный тип звонка: " + type);
 					}
-				} else {
-					UpdateTextBox("Размер строки " + (row + 1) + " не совпадает с форматом SpRecord");
 				}
 			}
 
@@ -199,41 +200,38 @@ namespace SpRecordParser {
 
 				DateTime callDate;
 				if (!DateTime.TryParse(fileContent[i][1], out callDate)) {
-					UpdateTextBox("Не удалось разобрать время звонка, строка: " + (i + 1) + 
+					UpdateTextBox("Не удалось разобрать время звонка, строка: " + (i + 1) +
 						" значение: " + fileContent[i][1]);
 					continue;
 				}
-				
+
 				if (!missedTime.Date.Equals(callDate.Date))
 					break;
 
 				string callPhoneNumbers = fileContent[i][4];
 				if (!callPhoneNumbers.Contains(callerNumber))
 					continue;
-				
+
 				lastCallTime = callDate;
 
 				string callType = fileContent[i][3];
 
-				if (callType.Equals("Непринятый"))
+				if (callType.Contains("Непринятый"))
 					break;
-				
+
 				fileContent[i].Add("Связка с пропущенным звонком");
 				fileContent[i].Add("Строка: " + (row + 1));
 
-				if (callType.Equals("Принятый")) {
+				if (callType.Contains("Принятый")) {
 					conversationTookPlace = true;
 					break;
-				} else if (callType.Equals("Набранный")) {
+				} else if (callType.Contains("Набранный")) {
 					string comment = fileContent[row][8];
-					if (comment.Equals("Вызываемый абонент не ответил.")) {
+					if (comment.Contains("Вызываемый абонент не ответил")) {
 						callBackTries++;
 
 						double minutesAfterMissedCall = callDate.Subtract(missedTime).TotalMinutes;
-						if (callBackTries == 1 && minutesAfterMissedCall > 5.0 ||
-							callBackTries == 2 && minutesAfterMissedCall > 20.0 ||
-							callBackTries == 3 && minutesAfterMissedCall > 35.0)
-							regulationsObserved = false;
+						CheckRegulationObservedStatus(ref regulationsObserved, callBackTries, minutesAfterMissedCall);
 					} else {
 						conversationTookPlace = true;
 						registryCallBackSucceded = true;
@@ -242,46 +240,110 @@ namespace SpRecordParser {
 				}
 			}
 
-			string result = "";
+			string resultColumn1 = "";
+			string resultColumn2 = "Регламент соблюден";
+			string resultColumn3 = "";
 
 			if (!conversationTookPlace) {
-				result = "Разговор с пациентом не состоялся, ";
-				fileInformation.callsBackNot++;
+				resultColumn1 = "Не дозвонились";
+				resultColumn3 = "Попыток сделано: " + callBackTries;
 
 				if (callBackTries == 0) {
 					regulationsObserved = false;
-					result += "пациенту не пытались перезвонить";
+					fileInformation.ringUpDidNotTried++;
+					resultColumn1 = "Не пытались перезвонить";
+					resultColumn3 = "";
 				} else if (callBackTries < 3) {
 					regulationsObserved = false;
-					result += "пациенту пытались перезвонить менее 3 раз";
+					fileInformation.ringUpNotRegulationNotObserved++;
 				} else {
-					result += "пациенту пытались перезвонить 3 или более раз";
+					if (regulationsObserved) {
+						fileInformation.ringUpNotRegulationObserved++;
+					} else {
+						fileInformation.ringUpNotRegulationNotObserved++;
+					}
 				}
 			} else {
+				callBackTries++;
 				double minutesAfterMissedCall = lastCallTime.Subtract(missedTime).TotalMinutes;
-				if (callBackTries == 0 && minutesAfterMissedCall > 5.0 ||
-					callBackTries == 1 && minutesAfterMissedCall > 20.0 ||
-					callBackTries == 2 && minutesAfterMissedCall > 35.0)
-					regulationsObserved = false;
+				CheckRegulationObservedStatus(ref regulationsObserved, callBackTries, minutesAfterMissedCall);
+				resultColumn3 = "Прошло минут: " + string.Format("{0:N2}", minutesAfterMissedCall) +
+					", попыток сделано: " + callBackTries;
 
 				if (registryCallBackSucceded) {
-					result = "Регистратура перезвонила пациенту";
-					fileInformation.callsBackByRegistry++;
+					switch (callBackTries) {
+						case 1:
+							resultColumn1 = "Дозвонились с одной попытки";
+							if (regulationsObserved) {
+								fileInformation.ringUp1tryRegulationObserved++;
+							} else {
+								fileInformation.ringUp1tryRegulationNotObserved++;
+							}
+							break;
+						case 2:
+							resultColumn1 = "Дозвонились с двух попыток";
+							if (regulationsObserved) {
+								fileInformation.ringUp2tryRegulationObserved++;
+							} else {
+								fileInformation.ringUp2tryRegulationNotObserved++;
+							}
+							break;
+						case 3:
+							resultColumn1 = "Дозвонились с трех попыток";
+							if (regulationsObserved) {
+								fileInformation.ringUp3tryRegulationObserved++;
+							} else {
+								fileInformation.ringUp3tryRegulationNotObserved++;
+							}
+							break;
+						default:
+							resultColumn1 = "Дозвонились с более чем трех попыток";
+							if (regulationsObserved) {
+								fileInformation.ringUp3MoreTryRegulationObserved++;
+							} else {
+								fileInformation.ringUp3MoreTryRegulationNotObserved++;
+							}
+							break;
+					}
 				} else {
-					result = "Пациент перезвонил самостоятельно";
-					fileInformation.callsBackByPatient++;
+					resultColumn1 = "Пациент перезвонил самостоятельно";
+					if (regulationsObserved) {
+						fileInformation.ringUpByPatientRegulationObserved++;
+					} else {
+						fileInformation.ringUpByPatientRegulationNotObserved++;
+					}
 				}
 			}
 
-			if (regulationsObserved) {
-				fileInformation.missedCallsRegulationObserved++;
-				result += ", регламент соблюден";
-			} else {
-				fileInformation.missedCallsRegulationNotObserved++;
-				result += ", регламент нарушен";
+			if (!regulationsObserved)
+				resultColumn2 = "Регламент нарушен";
+
+			fileContent[row].Add(resultColumn1);
+			fileContent[row].Add(resultColumn2);
+			fileContent[row].Add(resultColumn3);
+		}
+
+		private void CheckRegulationObservedStatus(
+			ref bool regulationsObserved, 
+			int callBackTries, 
+			double minutesAfterMissedCall) {
+			switch (callBackTries) {
+				case 1:
+					if (minutesAfterMissedCall > 5.0)
+						regulationsObserved = false;
+					break;
+				case 2:
+					if (minutesAfterMissedCall <= 5.0 || minutesAfterMissedCall > 20.0)
+						regulationsObserved = false;
+					break;
+				case 3:
+					if (minutesAfterMissedCall <= 20.0 || minutesAfterMissedCall > 35.0)
+						regulationsObserved = false;
+					break;
+				default:
+					break;
 			}
 
-			fileContent[row].Add(result);
 		}
 
 		private string[] SplitPhoneNumbers(string str) {

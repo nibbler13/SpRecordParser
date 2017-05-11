@@ -65,7 +65,7 @@ namespace SpRecordParser {
 						ws.Range["A" + rowToFill + ":" + columnName + rowToFill].Value = line.ToArray();
 						
 						//line lenght = 9 - normal
-						//			  = 10 - missed
+						//			  = 12 - missed
 						//			  = 11 - tied with missed
 
 						if (line.Count > 9) {
@@ -88,118 +88,253 @@ namespace SpRecordParser {
 				}
 
 				UpdateTextBox("Создание сводной таблицы по всем файлам");
-				ws.Range["A5"].Value = "Всего звонков";
-				ws.Range["A5:A6"].Merge();
-				ws.Range["A7"].Value = "Принятые";
-				ws.Range["A7:A8"].Merge();
-				ws.Range["A9"].Value = "Непринятые";
-				ws.Range["A9:A18"].Merge();
-				ws.Range["A19"].Value = "Ошибочные";
-				ws.Range["A19:A20"].Merge();
-				ws.Range["A21"].Value = "Набранные";
-				ws.Range["A21:A22"].Merge();
-				ws.Range["A1:A22"].VerticalAlignment = XlHAlign.xlHAlignCenter;
-				ws.Range["A5:A22"].Borders.LineStyle = XlLineStyle.xlDot;
-				ws.Range["A5:A22"].BorderAround2(XlLineStyle.xlContinuous, XlBorderWeight.xlMedium);
-				ws.Columns[1].ColumnWidth = 14;
 
-				string[] header = {
+				string firstColumnRange = "A5:A34";
+				Dictionary<string, string> firstColumn = new Dictionary<string, string> {
+					{"Всего звонков", "A5:A6" },
+					{"Принятые", "A7:A9" },
+					{"Непринятые", "A10:A29" },
+					{"Ошибочные", "A30:A32" },
+					{"Набранные", "A33:A34" }
+				};
+
+				foreach (KeyValuePair<string, string> item in firstColumn) {
+					try {
+						ws.Range[item.Value.Split(':')[0]].Value = item.Key;
+						ws.Range[item.Value].Merge();
+					} catch (Exception e) {
+						LoggingSystem.LogMessageToFile(e.Message);
+						LoggingSystem.LogMessageToFile(e.StackTrace);
+					}
+				}
+
+				ws.Range[firstColumnRange].VerticalAlignment = XlHAlign.xlHAlignCenter;
+				ws.Range[firstColumnRange].HorizontalAlignment = XlVAlign.xlVAlignCenter;
+				ws.Range[firstColumnRange].Borders.LineStyle = XlLineStyle.xlDot;
+				ws.Range[firstColumnRange].BorderAround2(XlLineStyle.xlContinuous, XlBorderWeight.xlMedium);
+				ws.Columns[1].ColumnWidth = 13;
+
+				string[] secondColumn = {
+					//header
 					"Имя файла",
 					"Имя рабочей станции",
 					"Дата создания",
 					"Отчетный период",
+					//total
 					"Количество",
-					"Длительность",
+					"Общая длительность",
+					//accepted
 					"Количество",
-					"Длительность",
+					"Общая длительность",
+					"Средняя длительность",
+					//missed
 					"Количество",
-					"Длительность",
-					"% от всего",
-					"Регистратура перезвонила и дозвонилась",
+					"Общая длительность",
+					"Средняя длительность",
+					"% от всех входящих",
+					"Регламент работы с непринятыми вызовами:" + Environment.NewLine +
+					"Первая попытка - не позднее 5 минут после непринятого вызова" + Environment.NewLine +
+					"Вторая попытка - от 5 до 20 минут после непринятого вызова" + Environment.NewLine +
+					"Третья попытка - от 20 до 35 минут после непринятого вызова",
+					"Дозвонились с одной попытки",
+					"Дозвонились с одной попытки",
+					"Дозвонились с двух попыток",
+					"Дозвонились с двух попыток",
+					"Дозвонились с трех попыток",
+					"Дозвонились с трех попыток",
+					"Дозвонились с более чем трех попыток",
+					"Дозвонились с более чем трех попыток",
 					"Пациент перезвонил самостоятельно",
-					"Не перезвонили / не дозвонились",
+					"Пациент перезвонил самостоятельно",
+					"Не дозвонились",
+					"Не дозвонились",
+					"Не пытались перезвонить",
 					"% недозвона",
-					"Регамент соблюден",
-					"Регламент нарушен",
 					"% нарушения регламента",
+					//accidental
 					"Количество",
-					"Время",
+					"Общая длительность",
+					"% от всех входящих",
+					//dialed
 					"Количество",
-					"Время",
-					"Расположение" };
+					"Общая длительность",
+					//header
+					"Расположение в книге" };
 
-				int rowToFillHead = 1;
-				foreach (string name in header) {
-					ws.Range["B" + rowToFillHead].Value = name;
-					rowToFillHead++;
+				int rowToStartFill = 1;
+				for (int i = 0; i < secondColumn.Length; i++) {
+					ws.Range["B" + rowToStartFill].Value = secondColumn[i];
+
+					if (i < secondColumn.Length - 1 && secondColumn[i] == secondColumn[i + 1]) {
+						ws.Range["B" + rowToStartFill + ":B" + (rowToStartFill + 1)].Merge();
+						i++;
+						rowToStartFill++;
+					} else {
+						if (!secondColumn[i].Equals("Не пытались перезвонить"))
+							ws.Range["B" + rowToStartFill + ":C" + rowToStartFill].Merge();
+					}
+
+					rowToStartFill++;
 				}
-				ws.Range["B1:B23"].Borders.LineStyle = XlLineStyle.xlDot;
-				ws.Range["B1:B23"].BorderAround2(XlLineStyle.xlContinuous, XlBorderWeight.xlMedium);
-				ws.Columns[2].ColumnWidth = 40;
 
-				int columnToFill = 3;
-				foreach(KeyValuePair<string, SpRecordFileInformation> fileInfo in filesInfo) {
+				string[] thirdColumn = {
+					"Регламент соблюден",
+					"Регламент нарушен",
+					"Регламент соблюден",
+					"Регламент нарушен",
+					"Регламент соблюден",
+					"Регламент нарушен",
+					"Регламент соблюден",
+					"Регламент нарушен",
+					"Регламент соблюден",
+					"Регламент нарушен",
+					"Регламент соблюден",
+					"Регламент нарушен",
+					"Регламент нарушен"
+				};
+
+				rowToStartFill = 15;
+				foreach (string item in thirdColumn) {
+					ws.Range["C" + rowToStartFill].Value = item;
+					rowToStartFill++;
+				}
+
+				string headersRange = "B1:C35";
+				ws.Range[headersRange].Borders.LineStyle = XlLineStyle.xlDot;
+				ws.Range[headersRange].BorderAround2(XlLineStyle.xlContinuous, XlBorderWeight.xlMedium);
+				ws.Range[headersRange].VerticalAlignment = XlHAlign.xlHAlignCenter;
+				//ws.Range[headersRange].HorizontalAlignment = XlVAlign.xlVAlignCenter;
+				ws.Rows[14].RowHeight = 60;
+				ws.Columns[2].ColumnWidth = 39;
+				ws.Columns[3].ColumnWidth = 20;
+
+				int columnToStartFill = 4;
+				int listStartPosition = 1;
+				foreach (KeyValuePair<string, SpRecordFileInformation> fileInfo in filesInfo) {
 					SpRecordFileInformation info = fileInfo.Value;
 
-					double missedPercentage = (double)info.callsMissed / (double)info.callsTotal;
-					double callsBackNotPercentage = (double)info.callsBackNot / (double)info.callsMissed;
-					double regulatinNotObservedPercentage = (double)info.missedCallsRegulationNotObserved /
-						((double)info.missedCallsRegulationNotObserved + (double)info.missedCallsRegulationObserved);
+					int callsIncoming = info.callsTotal - info.callsDialed;
+					int ringUpFailed = info.ringUpDidNotTried + 
+									   info.ringUpNotRegulationObserved + 
+									   info.ringUpNotRegulationNotObserved;
+					int regulationNotObserved = info.ringUp1tryRegulationNotObserved +
+												info.ringUp2tryRegulationNotObserved +
+												info.ringUp3tryRegulationNotObserved +
+												info.ringUp3MoreTryRegulationNotObserved +
+												info.ringUpByPatientRegulationNotObserved +
+												info.ringUpNotRegulationNotObserved +
+												info.ringUpDidNotTried;
 
 					string[] values = {
-						Path.GetFileName(fileInfo.Key),
-						info.workstationName,
-						info.creationDate,
-						info.accountingPeriod,
-						info.callsTotal.ToString(),
-						StringFromTimeSpan(info.timeTotal),
-						info.callsAccepted.ToString(),
-						StringFromTimeSpan(info.timeAccepted),
-						info.callsMissed.ToString(),
-						StringFromTimeSpan(info.timeMissed),
-						string.Format("{0:P2}", missedPercentage),
-						info.callsBackByRegistry.ToString(),
-						info.callsBackByPatient.ToString(),
-						info.callsBackNot.ToString(),
-						string.Format("{0:P2}", callsBackNotPercentage),
-						info.missedCallsRegulationObserved.ToString(),
-						info.missedCallsRegulationNotObserved.ToString(),
-						string.Format("{0:P2}", regulatinNotObservedPercentage),
-						info.callsAccidential.ToString(),
-						StringFromTimeSpan(info.timeAccidential),
-						info.callsDialed.ToString(),
-						StringFromTimeSpan(info.timeDialed),
-						"Лист " + (columnToFill - 2)};
+						Path.GetFileName(fileInfo.Key),				//Имя файла
+						info.workstationName,						//Имя рабочей станции
+						info.creationDate,							//Дата создания
+						info.accountingPeriod,						//Отчетный период
+						info.callsTotal.ToString(),					//Количество
+						StringFromTimeSpan(info.timeTotal),			//Общая длительность
+						info.callsAccepted.ToString(),				//Количество
+						StringFromTimeSpan(info.timeAccepted),		//Общая длительность
+						StringFromTimeSpan(GetAverageDuration(info.timeAccepted, info.callsAccepted)), //Средняя длительность
+						info.callsMissed.ToString(),				//Количество
+						StringFromTimeSpan(info.timeMissed),		//Общая длительность
+						StringFromTimeSpan(GetAverageDuration(info.timeMissed, info.callsMissed)), //Средняя длительность
+						GetPercentage(info.callsMissed, callsIncoming),	//% от всех входящих
+						"",											//Регламент работы
+						info.ringUp1tryRegulationObserved.ToString(), //Дозвонились с одной попытки Регламент соблюден
+						info.ringUp1tryRegulationNotObserved.ToString(), //Дозвонились с одной попытки Регламент нарушен
+						info.ringUp2tryRegulationObserved.ToString(), //Дозвонились с двух попыток Регламент соблюден
+						info.ringUp2tryRegulationNotObserved.ToString(), //Дозвонились с двух попыток Регламент нарушен
+						info.ringUp3tryRegulationObserved.ToString(), //Дозвонились с трех попыток Регламент соблюден
+						info.ringUp3tryRegulationNotObserved.ToString(), //Дозвонились с трех попыток Регламент нарушен
+						info.ringUp3MoreTryRegulationObserved.ToString(), //Дозвонились с более чем трех попыток Регламент соблюден
+						info.ringUp3MoreTryRegulationNotObserved.ToString(), //Дозвонились с более чем трех попыток Регламент нарушен
+						info.ringUpByPatientRegulationObserved.ToString(), //Пациент перезвонил самостоятельно Регламент соблюден
+						info.ringUpByPatientRegulationNotObserved.ToString(), //Пациент перезвонил самостоятельно Регламент нарушен
+						info.ringUpNotRegulationObserved.ToString(), //Не дозвонились Регламент соблюден
+						info.ringUpNotRegulationNotObserved.ToString(), //Не дозвонились Регламент нарушен
+						info.ringUpDidNotTried.ToString(), //Не пытались перезвонить Регламент нарушен
+						GetPercentage(ringUpFailed, info.callsMissed), //% недозвона
+						GetPercentage(regulationNotObserved, info.callsMissed), //% нарушения регламента
+						info.callsAccidential.ToString(),			//Количество
+						StringFromTimeSpan(info.timeAccidential),	//Общая длительность
+						GetPercentage(info.callsAccidential, callsIncoming), //% от всех входящих
+						info.callsDialed.ToString(),				//Количество
+						StringFromTimeSpan(info.timeDialed),		//Общая длительность
+						"Лист " + listStartPosition};			//Расположение
 
 					int rowToFillValues = 1;
+					listStartPosition++;
 
-					string columnName = GetExcelColumnName(columnToFill);
+					string columnName = GetExcelColumnName(columnToStartFill);
 					foreach (string value in values) {
 						ws.Range[columnName + rowToFillValues].Value = value;
 						rowToFillValues++;
 					}
 
-					ws.Columns[columnToFill].ColumnWidth = 25;
+					int colorIndex = 0;
+					if (callsIncoming > 0) {
+						double missedPercetage = (double)info.callsMissed / (double)callsIncoming * 100;
+						if (missedPercetage <= 4.0) {
+							colorIndex = 36; //green
+						} else if (missedPercetage > 6.0) {
+							colorIndex = 3; //red
+						} else {
+							colorIndex = 6; //yellow
+						}
+
+						if (colorIndex > 0) {
+							ws.Range[columnName + "13"].Interior.ColorIndex = colorIndex;
+							colorIndex = 0;
+						}
+					}
+
+					if (info.callsMissed > 0) {
+						double regulationsNotObservedPercentage =
+							(double)regulationNotObserved / (double)info.callsMissed * 100;
+						if (regulationsNotObservedPercentage <= 5.0) {
+							colorIndex = 36; //green
+						} else if (regulationsNotObservedPercentage > 15.0) {
+							colorIndex = 3; //red
+						} else {
+							colorIndex = 6; //yellow
+						}
+
+						if (colorIndex > 0) {
+							ws.Range[columnName + "29"].Interior.ColorIndex = colorIndex;
+						}
+					}
+
+
+					ws.Columns[columnToStartFill].ColumnWidth = 25;
 					ws.Range[columnName + "1:" + columnName + (rowToFillValues - 1)].
 						Borders.LineStyle = XlLineStyle.xlDot;
 					ws.Range[columnName + "1:" + columnName + (rowToFillValues - 1)].
 						BorderAround2(XlLineStyle.xlContinuous, XlBorderWeight.xlMedium);
-					columnToFill++;
+					columnToStartFill++;
 				}
 
 				ws.Rows[2].Font.Bold = true;
 				ws.Columns[1].Font.Bold = true;
 
-				string lastUsedColumn = GetExcelColumnName(columnToFill - 1);
+				string lastUsedColumn = GetExcelColumnName(columnToStartFill - 1);
 				string[] rangesBorderAround = {
+					//total
 					"A5:" + lastUsedColumn + "6",
-					"A7:" + lastUsedColumn + "8",
-					"B9:" + lastUsedColumn + "11",
-					"B12:" + lastUsedColumn + "15",
-					"B16:" + lastUsedColumn + "18",
-					"A19:" + lastUsedColumn + "20",
-					"A21:" + lastUsedColumn + "22",
-					"B23:" + lastUsedColumn + "23" };
+					//accepted
+					"A7:" + lastUsedColumn + "9",
+					//missed
+					//at glance
+					"B10:" + lastUsedColumn + "13",
+					//regulation
+					"B14:" + lastUsedColumn + "27",
+					//result
+					"B28:" + lastUsedColumn + "29",
+					//accidential
+					"A30:" + lastUsedColumn + "32",
+					//dialed
+					"A33:" + lastUsedColumn + "34",
+					//position
+					"B35:" + lastUsedColumn + "35" };
 
 				foreach (string rangeBorderAround in rangesBorderAround) {
 					ws.Range[rangeBorderAround].
@@ -207,18 +342,17 @@ namespace SpRecordParser {
 				}
 
 				string[] rangesInteriorColor = {
-					"B11:" + lastUsedColumn + "11",
-					"B15:" + lastUsedColumn + "15",
-					"B18:" + lastUsedColumn + "18" };
+					"B13:C13",
+					"B29:C29" };
 
 				foreach (string rangeInteriorColor in rangesInteriorColor) {
 					ws.Range[rangeInteriorColor].Interior.ColorIndex = 36;
 				}
 
 				ws.Range["B2:" + lastUsedColumn + "2"].Interior.ColorIndex = 24;
-				ws.Application.ActiveWindow.SplitColumn = 2;
+				ws.Application.ActiveWindow.SplitColumn = 3;
 				ws.Application.ActiveWindow.FreezePanes = true;
-				
+
 				string pathToSave = Directory.GetCurrentDirectory() + "\\" +
 					"Анализ звонков - " + DateTime.Now.ToLocalTime().ToString().Replace(":", ".") + ".xlsx";
 				wb.SaveAs(pathToSave);
@@ -238,6 +372,24 @@ namespace SpRecordParser {
 			}
 
 			return false;
+		}
+
+		private TimeSpan GetAverageDuration(TimeSpan duration, int quantity) {
+			TimeSpan averageDuration = new TimeSpan();
+
+			if (quantity != 0)
+				averageDuration = new TimeSpan(duration.Ticks / quantity);
+
+			return averageDuration;
+		}
+
+		private string GetPercentage(int value, int total) {
+			string percentage = "Значение недоступно";
+
+			if (total != 0)
+				percentage = string.Format("{0:P2}", (double)value / (double)total);
+
+			return percentage;
 		}
 
 		private static string StringFromTimeSpan(TimeSpan timeSpan) {

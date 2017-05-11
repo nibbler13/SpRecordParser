@@ -7,3 +7,4 @@
 \\nnkk-fs\doks\nn-admin\мои документы\visual studio 2017\Projects\SpRecordParser\SpRecordParser\obj\Release\SpRecordParser.csproj.GenerateResource.Cache
 \\nnkk-fs\doks\nn-admin\мои документы\visual studio 2017\Projects\SpRecordParser\SpRecordParser\obj\Release\SpRecordParser.exe
 \\nnkk-fs\doks\nn-admin\мои документы\visual studio 2017\Projects\SpRecordParser\SpRecordParser\obj\Release\SpRecordParser.pdb
+\\nnkk-fs\doks\nn-admin\мои документы\visual studio 2017\Projects\SpRecordParser\SpRecordParser\obj\Release\SpRecordParser.csprojResolveAssemblyReference.cache
