@@ -20,7 +20,8 @@ namespace SpRecordParser {
 		//Рассчитывается автоматически
 		public int callsAccepted { get; set; }
 		public int callsMissed { get; set; }
-		public int callsAccidential { get; set; }
+		public int callsAccidentialShort { get; set; }
+		public int callsAccidentialWrongValues { get; set; }
 		public int callsDialed { get; set; }
 
 		public int ringUp1tryRegulationObserved { get; set; }

@@ -132,13 +132,17 @@ namespace SpRecordParser {
 						fileInformation.timeDialed = fileInformation.timeDialed.Add(duration);
 					} else if (type.Contains("Непринятый")) {
 						if (duration.TotalSeconds <= 5) {
-							fileInformation.callsAccidential++;
+							fileInformation.callsAccidentialShort++;
 							fileInformation.timeAccidential = fileInformation.timeAccidential.Add(duration);
-							fileContent[row].Add("Ошибочный");
+							fileContent[row].Add("Ошибочный, длительность меньше 6 секунд");
 						} else {
-							fileInformation.callsMissed++;
-							fileInformation.timeMissed = fileInformation.timeMissed.Add(duration);
-							AnalyseMissedCall(row, ref fileInformation, ref fileContent);
+							if (IsAnalysingAMissedCallSucceed(row, ref fileInformation, ref fileContent)) {
+								fileInformation.callsMissed++;
+								fileInformation.timeMissed = fileInformation.timeMissed.Add(duration);
+							} else {
+								fileInformation.callsAccidentialWrongValues++;
+								fileInformation.timeAccidential = fileInformation.timeAccidential.Add(duration);
+							}
 						}
 					} else {
 						UpdateTextBox("Неизвестный тип звонка: " + type);
@@ -150,26 +154,26 @@ namespace SpRecordParser {
 			filesInfo.Add(fileName, fileInformation);
 		}
 
-		private void AnalyseMissedCall(
+		private bool IsAnalysingAMissedCallSucceed(
 			int row, ref SpRecordFileInformation fileInformation, ref List<List<string>> fileContent) {
 			//UpdateTextBox("Анализ пропущенного звонка, строка: " + (row + 1) + Environment.NewLine +
 			//	string.Join(";", fileContent[row]));
 
 			DateTime missedTime;
 			if (!DateTime.TryParse(fileContent[row][1], out missedTime)) {
-				fileContent[row].Add("Invalid date/time");
+				fileContent[row].Add("Ошибочный, не удалось разобрать время звонка");
 				UpdateTextBox("Не удалось разобрать время звонка, строка: " + (row + 1) +
 					" значение: " + fileContent[row][1]);
-				return;
+				return false;
 			}
 
 			string[] phoneNumbers = SplitPhoneNumbers(fileContent[row][4]);
 			string callerNumber = phoneNumbers[0];
 
 			if (string.IsNullOrEmpty(callerNumber)) {
-				fileContent[row].Add("Wrong caller phone number");
+				fileContent[row].Add("Ошибочный, номер звонившего не удалось определить");
 				UpdateTextBox("Номер звонившего не удалось определить");
-				return;
+				return false;
 			}
 
 			//надо проверять номера телефонов без кода города
@@ -177,12 +181,15 @@ namespace SpRecordParser {
 			try {
 				if (callerNumber.StartsWith("89")) {
 					callerNumber = callerNumber.Substring(1);
-				} else {
+				} else if (callerNumber.Length == 10) {
 					callerNumber = callerNumber.Substring(callerNumber.Length - 7);
 				}
 			} catch (Exception e) {
 				LoggingSystem.LogMessageToFile(e.Message);
 				LoggingSystem.LogMessageToFile(e.StackTrace);
+				fileContent[row].Add("Ошибочный, не удалось разобрать номер звонившего");
+				UpdateTextBox("Не удалось разобрать номер звонившего: " + callerNumber);
+				return false;
 			}
 
 			int callBackTries = 0;
@@ -321,6 +328,8 @@ namespace SpRecordParser {
 			fileContent[row].Add(resultColumn1);
 			fileContent[row].Add(resultColumn2);
 			fileContent[row].Add(resultColumn3);
+
+			return true;
 		}
 
 		private void CheckRegulationObservedStatus(

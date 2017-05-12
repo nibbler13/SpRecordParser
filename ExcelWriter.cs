@@ -94,8 +94,8 @@ namespace SpRecordParser {
 					{"Всего звонков", "A5:A6" },
 					{"Принятые", "A7:A9" },
 					{"Непринятые", "A10:A29" },
-					{"Ошибочные", "A30:A32" },
-					{"Набранные", "A33:A34" }
+					{"Ошибочные" + Environment.NewLine + "непринятые", "A30:A33" },
+					{"Набранные", "A34:A35" }
 				};
 
 				foreach (KeyValuePair<string, string> item in firstColumn) {
@@ -152,10 +152,11 @@ namespace SpRecordParser {
 					"% недозвона",
 					"% нарушения регламента",
 					//accidental
-					"Количество",
+					"Длительность меньше 6 секунд (количество)",
+					"Неправильные данные (количество)",
 					"Общая длительность",
-					"% от всех входящих",
 					//dialed
+					"% от всех входящих",
 					"Количество",
 					"Общая длительность",
 					//header
@@ -199,7 +200,7 @@ namespace SpRecordParser {
 					rowToStartFill++;
 				}
 
-				string headersRange = "B1:C35";
+				string headersRange = "B1:C36";
 				ws.Range[headersRange].Borders.LineStyle = XlLineStyle.xlDot;
 				ws.Range[headersRange].BorderAround2(XlLineStyle.xlContinuous, XlBorderWeight.xlMedium);
 				ws.Range[headersRange].VerticalAlignment = XlHAlign.xlHAlignCenter;
@@ -213,7 +214,8 @@ namespace SpRecordParser {
 				foreach (KeyValuePair<string, SpRecordFileInformation> fileInfo in filesInfo) {
 					SpRecordFileInformation info = fileInfo.Value;
 
-					int callsIncoming = info.callsTotal - info.callsDialed;
+					int callsIncoming = info.callsAccepted + info.callsMissed + 
+						info.callsAccidentialShort + info.callsAccidentialWrongValues;
 					int ringUpFailed = info.ringUpDidNotTried + 
 									   info.ringUpNotRegulationObserved + 
 									   info.ringUpNotRegulationNotObserved;
@@ -224,6 +226,7 @@ namespace SpRecordParser {
 												info.ringUpByPatientRegulationNotObserved +
 												info.ringUpNotRegulationNotObserved +
 												info.ringUpDidNotTried;
+					int callsAccidential = info.callsAccidentialShort + info.callsAccidentialWrongValues;
 
 					string[] values = {
 						Path.GetFileName(fileInfo.Key),				//Имя файла
@@ -255,9 +258,10 @@ namespace SpRecordParser {
 						info.ringUpDidNotTried.ToString(), //Не пытались перезвонить Регламент нарушен
 						GetPercentage(ringUpFailed, info.callsMissed), //% недозвона
 						GetPercentage(regulationNotObserved, info.callsMissed), //% нарушения регламента
-						info.callsAccidential.ToString(),			//Количество
+						info.callsAccidentialShort.ToString(),			//Длительность меньше 6 секунд (количество)
+						info.callsAccidentialWrongValues.ToString(),		//Неправильные данные (количество)
 						StringFromTimeSpan(info.timeAccidential),	//Общая длительность
-						GetPercentage(info.callsAccidential, callsIncoming), //% от всех входящих
+						GetPercentage(callsAccidential, callsIncoming), //% от всех входящих
 						info.callsDialed.ToString(),				//Количество
 						StringFromTimeSpan(info.timeDialed),		//Общая длительность
 						"Лист " + listStartPosition};			//Расположение
@@ -330,11 +334,11 @@ namespace SpRecordParser {
 					//result
 					"B28:" + lastUsedColumn + "29",
 					//accidential
-					"A30:" + lastUsedColumn + "32",
+					"A30:" + lastUsedColumn + "33",
 					//dialed
-					"A33:" + lastUsedColumn + "34",
+					"A34:" + lastUsedColumn + "35",
 					//position
-					"B35:" + lastUsedColumn + "35" };
+					"B36:" + lastUsedColumn + "36" };
 
 				foreach (string rangeBorderAround in rangesBorderAround) {
 					ws.Range[rangeBorderAround].
@@ -349,6 +353,7 @@ namespace SpRecordParser {
 					ws.Range[rangeInteriorColor].Interior.ColorIndex = 36;
 				}
 
+				ws.Rows[30].RowHeight = 15;
 				ws.Range["B2:" + lastUsedColumn + "2"].Interior.ColorIndex = 24;
 				ws.Application.ActiveWindow.SplitColumn = 3;
 				ws.Application.ActiveWindow.FreezePanes = true;
