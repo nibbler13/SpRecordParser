@@ -6,13 +6,26 @@ using System.Windows.Forms;
 namespace SpRecordParser {
 	public partial class FormMain : Form {
 		Thread parsingThread;
-		List<string> selectedFiles;
+		private List<Control> controlsToEnable;
+		private List<Control> controlsToVisible;
 
 		public FormMain() {
 			InitializeComponent();
 
 			listViewFiles.ItemSelectionChanged += ListViewFiles_ItemSelectionChanged;
 			this.FormClosing += Form1_FormClosing;
+
+			controlsToEnable = new List<Control>() {
+				buttonAnalyse
+			};
+
+			controlsToVisible = new List<Control>() {
+				buttonAnalyse,
+				buttonAdd,
+				buttonDelete,
+				labelListTitle,
+				listViewFiles
+			};
 		}
 
 		private void Form1_FormClosing(object sender, FormClosingEventArgs e) {
@@ -42,43 +55,49 @@ namespace SpRecordParser {
 				}
 
 				if (listViewFiles.Items.Count > 0)
-					buttonAnalyse.Enabled = true;
+					foreach (Control control in controlsToEnable)
+						control.Enabled = true;
 			}
 
 		}
 
 		private void buttonDelete_Click(object sender, EventArgs e) {
-			foreach(ListViewItem item in listViewFiles.SelectedItems) {
+			foreach(ListViewItem item in listViewFiles.SelectedItems)
 				listViewFiles.Items.Remove(item);
-			}
 
 			if (listViewFiles.Items.Count == 0)
-				buttonAnalyse.Enabled = false;
+				foreach (Control control in controlsToEnable)
+					control.Enabled = false;
 		}
 
 		private void buttonAnalyse_Click(object sender, EventArgs e) {
-			buttonAnalyse.Visible = false;
-			buttonAdd.Visible = false;
-			buttonDelete.Visible = false;
-			labelListTitle.Visible = false;
-			labelBottomHelp.Visible = false;
-			listViewFiles.Visible = false;
+			foreach (Control control in controlsToVisible)
+				control.Visible = false;
 			
 			textBox.Visible = true;
 			progressBar.Visible = true;
 
-			selectedFiles = new List<string>();
-			foreach (ListViewItem item in listViewFiles.Items) {
+			List<string> selectedFiles = new List<string>();
+			foreach (ListViewItem item in listViewFiles.Items)
 				selectedFiles.Add(item.Text);
-			}
 
-			parsingThread = new Thread(StartParsing);
+			parsingThread = new Thread(() => StartParsing(selectedFiles));
 			parsingThread.Start();
 		}
 
-		public void StartParsing() {
+		public void StartParsing(List<string> selectedFiles) {
 			FileParser fileParser = new FileParser(progressBar, textBox);
 			fileParser.ParseFiles(selectedFiles);
+		}
+
+		private void settingsToolStripMenuItem_Click(object sender, EventArgs e) {
+		FormSettings formSettings = new FormSettings();
+		formSettings.ShowDialog();
+	}
+
+		private void aboutToolStripMenuItem1_Click(object sender, EventArgs e) {
+			FormAbout formAbout = new FormAbout();
+			formAbout.ShowDialog();
 		}
 	}
 }

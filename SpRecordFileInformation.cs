@@ -9,39 +9,40 @@ namespace SpRecordParser {
 		public List<List<string>> fileContent { get; set; }
 
 		//Заполняется значениеми из файла
-		public int callsTotal { get; set; }
+		public int CallsTotal { get; set; }
 
-		public string workstationName { get; set; }
-		public string creationDate { get; set; }
-		public string accountingPeriod { get; set; }
+		public string WorkstationName { get; set; }
+		public string CreationDate { get; set; }
+		public string AccountingPeriod { get; set; }
 
-		public TimeSpan timeTotal { get; set; }
+		public TimeSpan TimeTotal { get; set; }
 
 		//Рассчитывается автоматически
-		public int callsAccepted { get; set; }
-		public int callsMissed { get; set; }
-		public int callsAccidentialShort { get; set; }
-		public int callsAccidentialWrongValues { get; set; }
-		public int callsDialed { get; set; }
+		public int CallsAccepted { get; set; }
+		public int CallsMissed { get; set; }
+		public int CallsMissedAccidentialShort { get; set; }
+		public int CallsMissedAccidentialWrongValues { get; set; }
+		public int CallsMissedInternal { get; set; }
+		public int CallsDialed { get; set; }
 
-		public int ringUp1tryRegulationObserved { get; set; }
-		public int ringUp1tryRegulationNotObserved { get; set; }
-		public int ringUp2tryRegulationObserved { get; set; }
-		public int ringUp2tryRegulationNotObserved { get; set; }
-		public int ringUp3tryRegulationObserved { get; set; }
-		public int ringUp3tryRegulationNotObserved { get; set; }
-		public int ringUp3MoreTryRegulationObserved { get; set; }
-		public int ringUp3MoreTryRegulationNotObserved { get; set; }
-		public int ringUpByPatientRegulationObserved { get; set; }
-		public int ringUpByPatientRegulationNotObserved { get; set; }
-		public int ringUpNotRegulationObserved { get; set; }
-		public int ringUpNotRegulationNotObserved { get; set; }
-		public int ringUpDidNotTried { get; set; }
+		public int RingUp1tryRegulationObserved { get; set; }
+		public int RingUp1tryRegulationNotObserved { get; set; }
+		public int RingUp2tryRegulationObserved { get; set; }
+		public int RingUp2tryRegulationNotObserved { get; set; }
+		public int RingUp3tryRegulationObserved { get; set; }
+		public int RingUp3tryRegulationNotObserved { get; set; }
+		public int RingUp3MoreTryRegulationObserved { get; set; }
+		public int RingUp3MoreTryRegulationNotObserved { get; set; }
+		public int RingUpByPatientRegulationObserved { get; set; }
+		public int RingUpByPatientRegulationNotObserved { get; set; }
+		public int RingUpNotRegulationObserved { get; set; }
+		public int RingUpNotRegulationNotObserved { get; set; }
+		public int RingUpDidNotTried { get; set; }
 		
-		public TimeSpan timeAccepted { get; set; }
-		public TimeSpan timeMissed { get; set; }
-		public TimeSpan timeAccidential { get; set; }
-		public TimeSpan timeDialed { get; set; }
+		public TimeSpan TimeAccepted { get; set; }
+		public TimeSpan TimeMissed { get; set; }
+		public TimeSpan TimeAccidential { get; set; }
+		public TimeSpan TimeDialed { get; set; }
 
 		public SpRecordFileInformation() {
 

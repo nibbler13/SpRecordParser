@@ -23,21 +23,44 @@
 		/// содержимое этого метода с помощью редактора кода.
 		/// </summary>
 		private void InitializeComponent() {
+			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormMain));
+			this.toolStripMenuItemSettings = new System.Windows.Forms.ToolStripMenuItem();
+			this.toolStripMenuItemAbout = new System.Windows.Forms.ToolStripMenuItem();
 			this.buttonDelete = new System.Windows.Forms.Button();
 			this.listViewFiles = new System.Windows.Forms.ListView();
 			this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.buttonAdd = new System.Windows.Forms.Button();
 			this.labelListTitle = new System.Windows.Forms.Label();
-			this.labelBottomHelp = new System.Windows.Forms.Label();
 			this.buttonAnalyse = new System.Windows.Forms.Button();
 			this.progressBar = new System.Windows.Forms.ProgressBar();
 			this.textBox = new System.Windows.Forms.TextBox();
+			this.настройкиToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.оПрограммеToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.menuStrip1 = new System.Windows.Forms.MenuStrip();
+			this.dfdsfToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.оПрограммеToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+			this.menuStrip1.SuspendLayout();
 			this.SuspendLayout();
+			// 
+			// toolStripMenuItemSettings
+			// 
+			this.toolStripMenuItemSettings.Name = "toolStripMenuItemSettings";
+			this.toolStripMenuItemSettings.Size = new System.Drawing.Size(79, 20);
+			this.toolStripMenuItemSettings.Text = "Настройки";
+			this.toolStripMenuItemSettings.Click += new System.EventHandler(this.settingsToolStripMenuItem_Click);
+			// 
+			// toolStripMenuItemAbout
+			// 
+			this.toolStripMenuItemAbout.Name = "toolStripMenuItemAbout";
+			this.toolStripMenuItemAbout.Size = new System.Drawing.Size(94, 20);
+			this.toolStripMenuItemAbout.Text = "О программе";
+			this.toolStripMenuItemAbout.Click += new System.EventHandler(this.aboutToolStripMenuItem1_Click);
 			// 
 			// buttonDelete
 			// 
+			this.buttonDelete.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
 			this.buttonDelete.Enabled = false;
-			this.buttonDelete.Location = new System.Drawing.Point(16, 423);
+			this.buttonDelete.Location = new System.Drawing.Point(93, 456);
 			this.buttonDelete.Name = "buttonDelete";
 			this.buttonDelete.Size = new System.Drawing.Size(75, 23);
 			this.buttonDelete.TabIndex = 2;
@@ -47,12 +70,15 @@
 			// 
 			// listViewFiles
 			// 
+			this.listViewFiles.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
 			this.listViewFiles.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.columnHeader1});
 			this.listViewFiles.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
-			this.listViewFiles.Location = new System.Drawing.Point(16, 29);
+			this.listViewFiles.Location = new System.Drawing.Point(12, 27);
 			this.listViewFiles.Name = "listViewFiles";
-			this.listViewFiles.Size = new System.Drawing.Size(385, 315);
+			this.listViewFiles.Size = new System.Drawing.Size(390, 400);
 			this.listViewFiles.TabIndex = 4;
 			this.listViewFiles.UseCompatibleStateImageBehavior = false;
 			this.listViewFiles.View = System.Windows.Forms.View.Details;
@@ -64,7 +90,8 @@
 			// 
 			// buttonAdd
 			// 
-			this.buttonAdd.Location = new System.Drawing.Point(326, 423);
+			this.buttonAdd.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+			this.buttonAdd.Location = new System.Drawing.Point(12, 456);
 			this.buttonAdd.Name = "buttonAdd";
 			this.buttonAdd.Size = new System.Drawing.Size(75, 23);
 			this.buttonAdd.TabIndex = 1;
@@ -75,27 +102,19 @@
 			// labelListTitle
 			// 
 			this.labelListTitle.AutoSize = true;
-			this.labelListTitle.Location = new System.Drawing.Point(13, 13);
+			this.labelListTitle.ForeColor = System.Drawing.SystemColors.ControlDarkDark;
+			this.labelListTitle.Location = new System.Drawing.Point(132, 430);
+			this.labelListTitle.Margin = new System.Windows.Forms.Padding(3, 0, 3, 10);
 			this.labelListTitle.Name = "labelListTitle";
-			this.labelListTitle.Size = new System.Drawing.Size(154, 13);
+			this.labelListTitle.Size = new System.Drawing.Size(151, 13);
 			this.labelListTitle.TabIndex = 4;
-			this.labelListTitle.Text = "Список файлов для анализа:";
-			// 
-			// labelBottomHelp
-			// 
-			this.labelBottomHelp.ForeColor = System.Drawing.SystemColors.ControlDarkDark;
-			this.labelBottomHelp.Location = new System.Drawing.Point(13, 347);
-			this.labelBottomHelp.Name = "labelBottomHelp";
-			this.labelBottomHelp.Size = new System.Drawing.Size(388, 73);
-			this.labelBottomHelp.TabIndex = 7;
-			this.labelBottomHelp.Text = "Требуются файлы формата CSV, созданные в программе SpRecord.\r\n\r\nПорядок столбцов:" +
-    " \r\nНазвание канала, Время записи, Длительность, Тип записи, Номер абонента, Ext," +
-    " CO, Тип CO, Комментарий";
+			this.labelListTitle.Text = "Список файлов для анализа";
 			// 
 			// buttonAnalyse
 			// 
+			this.buttonAnalyse.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
 			this.buttonAnalyse.Enabled = false;
-			this.buttonAnalyse.Location = new System.Drawing.Point(139, 453);
+			this.buttonAnalyse.Location = new System.Drawing.Point(267, 456);
 			this.buttonAnalyse.Name = "buttonAnalyse";
 			this.buttonAnalyse.Size = new System.Drawing.Size(135, 23);
 			this.buttonAnalyse.TabIndex = 3;
@@ -105,38 +124,88 @@
 			// 
 			// progressBar
 			// 
-			this.progressBar.Location = new System.Drawing.Point(14, 453);
+			this.progressBar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+			this.progressBar.Location = new System.Drawing.Point(12, 456);
 			this.progressBar.Name = "progressBar";
-			this.progressBar.Size = new System.Drawing.Size(385, 23);
+			this.progressBar.Size = new System.Drawing.Size(390, 23);
 			this.progressBar.TabIndex = 8;
 			this.progressBar.Visible = false;
 			// 
 			// textBox
 			// 
-			this.textBox.Location = new System.Drawing.Point(12, 12);
+			this.textBox.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+			this.textBox.Location = new System.Drawing.Point(12, 27);
 			this.textBox.Multiline = true;
 			this.textBox.Name = "textBox";
 			this.textBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-			this.textBox.Size = new System.Drawing.Size(389, 434);
+			this.textBox.Size = new System.Drawing.Size(390, 423);
 			this.textBox.TabIndex = 9;
 			this.textBox.Visible = false;
 			// 
-			// Form1
+			// настройкиToolStripMenuItem
+			// 
+			this.настройкиToolStripMenuItem.Name = "настройкиToolStripMenuItem";
+			this.настройкиToolStripMenuItem.Size = new System.Drawing.Size(79, 20);
+			this.настройкиToolStripMenuItem.Text = "Настройки";
+			this.настройкиToolStripMenuItem.Click += new System.EventHandler(this.settingsToolStripMenuItem_Click);
+			// 
+			// оПрограммеToolStripMenuItem
+			// 
+			this.оПрограммеToolStripMenuItem.Name = "оПрограммеToolStripMenuItem";
+			this.оПрограммеToolStripMenuItem.Size = new System.Drawing.Size(94, 20);
+			this.оПрограммеToolStripMenuItem.Text = "О программе";
+			this.оПрограммеToolStripMenuItem.Click += new System.EventHandler(this.aboutToolStripMenuItem1_Click);
+			// 
+			// menuStrip1
+			// 
+			this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.dfdsfToolStripMenuItem,
+            this.оПрограммеToolStripMenuItem1});
+			this.menuStrip1.Location = new System.Drawing.Point(0, 0);
+			this.menuStrip1.Name = "menuStrip1";
+			this.menuStrip1.Size = new System.Drawing.Size(414, 24);
+			this.menuStrip1.TabIndex = 10;
+			this.menuStrip1.Text = "menuStrip1";
+			// 
+			// dfdsfToolStripMenuItem
+			// 
+			this.dfdsfToolStripMenuItem.Name = "dfdsfToolStripMenuItem";
+			this.dfdsfToolStripMenuItem.Size = new System.Drawing.Size(79, 20);
+			this.dfdsfToolStripMenuItem.Text = "Настройки";
+			this.dfdsfToolStripMenuItem.Click += new System.EventHandler(this.settingsToolStripMenuItem_Click);
+			// 
+			// оПрограммеToolStripMenuItem1
+			// 
+			this.оПрограммеToolStripMenuItem1.Name = "оПрограммеToolStripMenuItem1";
+			this.оПрограммеToolStripMenuItem1.Size = new System.Drawing.Size(94, 20);
+			this.оПрограммеToolStripMenuItem1.Text = "О программе";
+			this.оПрограммеToolStripMenuItem1.Click += new System.EventHandler(this.aboutToolStripMenuItem1_Click);
+			// 
+			// FormMain
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(413, 488);
+			this.ClientSize = new System.Drawing.Size(414, 491);
 			this.Controls.Add(this.buttonAnalyse);
-			this.Controls.Add(this.labelBottomHelp);
 			this.Controls.Add(this.labelListTitle);
 			this.Controls.Add(this.buttonAdd);
 			this.Controls.Add(this.listViewFiles);
 			this.Controls.Add(this.buttonDelete);
 			this.Controls.Add(this.progressBar);
 			this.Controls.Add(this.textBox);
-			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
-			this.Name = "Form1";
+			this.Controls.Add(this.menuStrip1);
+			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+			this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+			this.MaximizeBox = false;
+			this.MinimumSize = new System.Drawing.Size(430, 530);
+			this.Name = "FormMain";
+			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
 			this.Text = "Анализ журналов звонков SpRecord";
+			this.menuStrip1.ResumeLayout(false);
+			this.menuStrip1.PerformLayout();
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -152,7 +221,13 @@
 		private System.Windows.Forms.ProgressBar progressBar;
 		private System.Windows.Forms.TextBox textBox;
 		private System.Windows.Forms.Label labelListTitle;
-		private System.Windows.Forms.Label labelBottomHelp;
+		private System.Windows.Forms.ToolStripMenuItem toolStripMenuItemSettings;
+		private System.Windows.Forms.ToolStripMenuItem toolStripMenuItemAbout;
+		private System.Windows.Forms.ToolStripMenuItem настройкиToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem оПрограммеToolStripMenuItem;
+		private System.Windows.Forms.MenuStrip menuStrip1;
+		private System.Windows.Forms.ToolStripMenuItem dfdsfToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem оПрограммеToolStripMenuItem1;
 	}
 }
 

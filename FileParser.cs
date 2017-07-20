@@ -125,23 +125,29 @@ namespace SpRecordParser {
 					string type = line[3];
 
 					if (type.Contains("Принятый")) {
-						fileInformation.callsAccepted++;
-						fileInformation.timeAccepted = fileInformation.timeAccepted.Add(duration);
+						fileInformation.CallsAccepted++;
+						fileInformation.TimeAccepted = fileInformation.TimeAccepted.Add(duration);
 					} else if (type.Contains("Набранный")) {
-						fileInformation.callsDialed++;
-						fileInformation.timeDialed = fileInformation.timeDialed.Add(duration);
+						fileInformation.CallsDialed++;
+						fileInformation.TimeDialed = fileInformation.TimeDialed.Add(duration);
 					} else if (type.Contains("Непринятый")) {
+						if (line.Count > 9) {
+							fileInformation.CallsMissedAccidentialWrongValues++;
+							fileInformation.TimeAccidential = fileInformation.TimeAccidential.Add(duration);
+							continue;
+						}
+
 						if (duration.TotalSeconds <= 5) {
-							fileInformation.callsAccidentialShort++;
-							fileInformation.timeAccidential = fileInformation.timeAccidential.Add(duration);
+							fileInformation.CallsMissedAccidentialShort++;
+							fileInformation.TimeAccidential = fileInformation.TimeAccidential.Add(duration);
 							fileContent[row].Add("Ошибочный, длительность меньше 6 секунд");
 						} else {
 							if (IsAnalysingAMissedCallSucceed(row, ref fileInformation, ref fileContent)) {
-								fileInformation.callsMissed++;
-								fileInformation.timeMissed = fileInformation.timeMissed.Add(duration);
+								fileInformation.CallsMissed++;
+								fileInformation.TimeMissed = fileInformation.TimeMissed.Add(duration);
 							} else {
-								fileInformation.callsAccidentialWrongValues++;
-								fileInformation.timeAccidential = fileInformation.timeAccidential.Add(duration);
+								fileInformation.CallsMissedAccidentialWrongValues++;
+								fileInformation.TimeAccidential = fileInformation.TimeAccidential.Add(duration);
 							}
 						}
 					} else {
@@ -159,11 +165,16 @@ namespace SpRecordParser {
 			//UpdateTextBox("Анализ пропущенного звонка, строка: " + (row + 1) + Environment.NewLine +
 			//	string.Join(";", fileContent[row]));
 
-			DateTime missedTime;
-			if (!DateTime.TryParse(fileContent[row][1], out missedTime)) {
+			DateTime dateTimeMissedTime;
+			if (!DateTime.TryParse(fileContent[row][1], out dateTimeMissedTime)) {
 				fileContent[row].Add("Ошибочный, не удалось разобрать время звонка");
 				UpdateTextBox("Не удалось разобрать время звонка, строка: " + (row + 1) +
 					" значение: " + fileContent[row][1]);
+				return false;
+			} else if (Properties.Settings.Default.IgnoreNonworkingTimeMissedCalls &&
+				(dateTimeMissedTime.TimeOfDay.TotalSeconds < Properties.Settings.Default.WorkingTimeBegin.TotalSeconds ||
+				dateTimeMissedTime.TimeOfDay.TotalSeconds > Properties.Settings.Default.WorkingTimeEnd.TotalSeconds)) {
+				fileContent[row].Add("Ошибочный, время звонка выходит за границы времени работы клиники");
 				return false;
 			}
 
@@ -174,21 +185,8 @@ namespace SpRecordParser {
 				fileContent[row].Add("Ошибочный, номер звонившего не удалось определить");
 				UpdateTextBox("Номер звонившего не удалось определить");
 				return false;
-			}
-
-			//надо проверять номера телефонов без кода города
-			//мобильные без 8 спереди
-			try {
-				if (callerNumber.StartsWith("89")) {
-					callerNumber = callerNumber.Substring(1);
-				} else if (callerNumber.Length == 10) {
-					callerNumber = callerNumber.Substring(callerNumber.Length - 7);
-				}
-			} catch (Exception e) {
-				LoggingSystem.LogMessageToFile(e.Message);
-				LoggingSystem.LogMessageToFile(e.StackTrace);
-				fileContent[row].Add("Ошибочный, не удалось разобрать номер звонившего");
-				UpdateTextBox("Не удалось разобрать номер звонившего: " + callerNumber);
+			} else if (callerNumber.Length <= 5 && Properties.Settings.Default.IgnoreInternalMissedCalls) {
+				fileContent[row].Add("Ошибочный, внутренний номер");
 				return false;
 			}
 
@@ -196,7 +194,7 @@ namespace SpRecordParser {
 			bool regulationsObserved = true;
 			bool registryCallBackSucceded = false;
 			bool conversationTookPlace = false;
-			DateTime lastCallTime = missedTime;
+			DateTime dateTimeCallBack = dateTimeMissedTime;
 
 			for (int i = row - 1; i >= 0; i--) {
 				if (fileContent[i].Count < 9)
@@ -205,26 +203,39 @@ namespace SpRecordParser {
 				if (fileContent[i][0].Equals("Название канала"))
 					break;
 
-				DateTime callDate;
-				if (!DateTime.TryParse(fileContent[i][1], out callDate)) {
+				DateTime dateTimeCurrentCall;
+				if (!DateTime.TryParse(fileContent[i][1], out dateTimeCurrentCall)) {
 					UpdateTextBox("Не удалось разобрать время звонка, строка: " + (i + 1) +
 						" значение: " + fileContent[i][1]);
 					continue;
 				}
 
-				if (!missedTime.Date.Equals(callDate.Date))
+				if (!dateTimeMissedTime.Date.Equals(dateTimeCurrentCall.Date))
 					break;
 
 				string callPhoneNumbers = fileContent[i][4];
 				if (!callPhoneNumbers.Contains(callerNumber))
 					continue;
 
-				lastCallTime = callDate;
+				dateTimeCallBack = dateTimeCurrentCall;
 
 				string callType = fileContent[i][3];
 
-				if (callType.Contains("Непринятый"))
-					break;
+				if (callType.Contains("Непринятый")) {
+					if (!Properties.Settings.Default.CalcRepeatedMissedAsOne)
+						break;
+
+					String[] currentCallPhoneNumber = SplitPhoneNumbers(callPhoneNumbers);
+					if (currentCallPhoneNumber[0].Length < 10)
+						break;
+
+					if (dateTimeCurrentCall.Subtract(dateTimeMissedTime).TotalSeconds >
+						Properties.Settings.Default.CallbackThirdAttemptMax * 60)
+						break;
+
+					fileContent[i].Add("Ошибочный, дубль предыдущего непринятого звонка с таким же номером (" + (row + 1) + ")");
+					continue;
+				}
 
 				fileContent[i].Add("Связка с пропущенным звонком");
 				fileContent[i].Add("Строка: " + (row + 1));
@@ -237,7 +248,7 @@ namespace SpRecordParser {
 					if (comment.Contains("Вызываемый абонент не ответил")) {
 						callBackTries++;
 
-						double minutesAfterMissedCall = callDate.Subtract(missedTime).TotalMinutes;
+						double minutesAfterMissedCall = dateTimeCurrentCall.Subtract(dateTimeMissedTime).TotalMinutes;
 						CheckRegulationObservedStatus(ref regulationsObserved, callBackTries, minutesAfterMissedCall);
 					} else {
 						conversationTookPlace = true;
@@ -257,22 +268,22 @@ namespace SpRecordParser {
 
 				if (callBackTries == 0) {
 					regulationsObserved = false;
-					fileInformation.ringUpDidNotTried++;
+					fileInformation.RingUpDidNotTried++;
 					resultColumn1 = "Не пытались перезвонить";
 					resultColumn3 = "";
 				} else if (callBackTries < 3) {
 					regulationsObserved = false;
-					fileInformation.ringUpNotRegulationNotObserved++;
+					fileInformation.RingUpNotRegulationNotObserved++;
 				} else {
 					if (regulationsObserved) {
-						fileInformation.ringUpNotRegulationObserved++;
+						fileInformation.RingUpNotRegulationObserved++;
 					} else {
-						fileInformation.ringUpNotRegulationNotObserved++;
+						fileInformation.RingUpNotRegulationNotObserved++;
 					}
 				}
 			} else {
 				callBackTries++;
-				double minutesAfterMissedCall = lastCallTime.Subtract(missedTime).TotalMinutes;
+				double minutesAfterMissedCall = dateTimeCallBack.Subtract(dateTimeMissedTime).TotalMinutes;
 				CheckRegulationObservedStatus(ref regulationsObserved, callBackTries, minutesAfterMissedCall);
 				resultColumn3 = "Прошло минут: " + string.Format("{0:N2}", minutesAfterMissedCall) +
 					", попыток сделано: " + callBackTries;
@@ -282,42 +293,42 @@ namespace SpRecordParser {
 						case 1:
 							resultColumn1 = "Дозвонились с одной попытки";
 							if (regulationsObserved) {
-								fileInformation.ringUp1tryRegulationObserved++;
+								fileInformation.RingUp1tryRegulationObserved++;
 							} else {
-								fileInformation.ringUp1tryRegulationNotObserved++;
+								fileInformation.RingUp1tryRegulationNotObserved++;
 							}
 							break;
 						case 2:
 							resultColumn1 = "Дозвонились с двух попыток";
 							if (regulationsObserved) {
-								fileInformation.ringUp2tryRegulationObserved++;
+								fileInformation.RingUp2tryRegulationObserved++;
 							} else {
-								fileInformation.ringUp2tryRegulationNotObserved++;
+								fileInformation.RingUp2tryRegulationNotObserved++;
 							}
 							break;
 						case 3:
 							resultColumn1 = "Дозвонились с трех попыток";
 							if (regulationsObserved) {
-								fileInformation.ringUp3tryRegulationObserved++;
+								fileInformation.RingUp3tryRegulationObserved++;
 							} else {
-								fileInformation.ringUp3tryRegulationNotObserved++;
+								fileInformation.RingUp3tryRegulationNotObserved++;
 							}
 							break;
 						default:
 							resultColumn1 = "Дозвонились с более чем трех попыток";
 							if (regulationsObserved) {
-								fileInformation.ringUp3MoreTryRegulationObserved++;
+								fileInformation.RingUp3MoreTryRegulationObserved++;
 							} else {
-								fileInformation.ringUp3MoreTryRegulationNotObserved++;
+								fileInformation.RingUp3MoreTryRegulationNotObserved++;
 							}
 							break;
 					}
 				} else {
 					resultColumn1 = "Пациент перезвонил самостоятельно";
 					if (regulationsObserved) {
-						fileInformation.ringUpByPatientRegulationObserved++;
+						fileInformation.RingUpByPatientRegulationObserved++;
 					} else {
-						fileInformation.ringUpByPatientRegulationNotObserved++;
+						fileInformation.RingUpByPatientRegulationNotObserved++;
 					}
 				}
 			}
@@ -338,15 +349,17 @@ namespace SpRecordParser {
 			double minutesAfterMissedCall) {
 			switch (callBackTries) {
 				case 1:
-					if (minutesAfterMissedCall > 5.0)
+					if (minutesAfterMissedCall > Properties.Settings.Default.CallbackFirstAttemptMax)
 						regulationsObserved = false;
 					break;
 				case 2:
-					if (minutesAfterMissedCall <= 5.0 || minutesAfterMissedCall > 20.0)
+					if (minutesAfterMissedCall <= Properties.Settings.Default.CallbackFirstAttemptMax ||
+						minutesAfterMissedCall > Properties.Settings.Default.CallbackSecondAttemptMax)
 						regulationsObserved = false;
 					break;
 				case 3:
-					if (minutesAfterMissedCall <= 20.0 || minutesAfterMissedCall > 35.0)
+					if (minutesAfterMissedCall <= Properties.Settings.Default.CallbackSecondAttemptMax || 
+						minutesAfterMissedCall > Properties.Settings.Default.CallbackThirdAttemptMax)
 						regulationsObserved = false;
 					break;
 				default:
@@ -363,6 +376,17 @@ namespace SpRecordParser {
 
 			try {
 				phoneNumbers = str.Split(new[] { " -> " }, StringSplitOptions.None);
+
+				int index = 0;
+				foreach (string number in phoneNumbers) {
+					string clearedToDigit = new string(number.Where(Char.IsDigit).ToArray());
+					if (clearedToDigit.Length >= 10)
+						clearedToDigit = clearedToDigit.Substring(clearedToDigit.Length - 10);
+					if (!clearedToDigit.StartsWith("9") && clearedToDigit.Length >= 7)
+						clearedToDigit = clearedToDigit.Substring(clearedToDigit.Length - 7);
+					phoneNumbers[index] = clearedToDigit;
+					index++;
+				}
 			} catch (Exception e) {
 				LoggingSystem.LogMessageToFile(e.Message);
 				LoggingSystem.LogMessageToFile(e.StackTrace);
@@ -393,7 +417,7 @@ namespace SpRecordParser {
 			try {
 				int colonSymbol = str.IndexOf(":");
 				string creationDate = str.Substring(colonSymbol + 2, str.Length - colonSymbol - 3);
-				fileInformation.creationDate = creationDate;
+				fileInformation.CreationDate = creationDate;
 				UpdateTextBox("Дата создания списка: " + creationDate);
 			} catch (Exception e) {
 				UpdateTextBox("Не удалось выполнить разбор строки с датой создания" + 
@@ -405,7 +429,7 @@ namespace SpRecordParser {
 			try {
 				int colonSymbol = str.IndexOf(":");
 				string workstationName = str.Substring(colonSymbol + 2, str.Length - colonSymbol - 3);
-				fileInformation.workstationName = workstationName;
+				fileInformation.WorkstationName = workstationName;
 				UpdateTextBox("Рабочая станция: " + workstationName);
 			} catch (Exception e) {
 				UpdateTextBox("Не удалось выполнить разбор строки с рабочей станцией" +
@@ -417,7 +441,7 @@ namespace SpRecordParser {
 			try {
 				int mark = str.IndexOf("записи");
 				string accountingPeriod = str.Substring(mark + 7, str.Length - mark - 7);
-				fileInformation.accountingPeriod = accountingPeriod;
+				fileInformation.AccountingPeriod = accountingPeriod;
 				UpdateTextBox("Период отчета: " + accountingPeriod);
 			} catch (Exception e) {
 				UpdateTextBox("Не удалось выполнить разбор строки с периодом отчета" +
@@ -438,13 +462,13 @@ namespace SpRecordParser {
 				if (!int.TryParse(totalRecordsText, out totalRecords))
 					UpdateTextBox("Не удалось считать общее количество записей", error: false);
 
-				fileInformation.callsTotal = totalRecords;
+				fileInformation.CallsTotal = totalRecords;
 
 				int secondColonSymbol = str.IndexOf("ть:");
 				string totalTimeText = str.Substring(secondColonSymbol + 4,
 					str.Length - secondColonSymbol - 4);
 
-				fileInformation.timeTotal = ParseTimeSpan(totalTimeText);
+				fileInformation.TimeTotal = ParseTimeSpan(totalTimeText);
 			} catch (Exception e) {
 				UpdateTextBox("Не удалось выполнить разбор последней строки" +
 					Environment.NewLine + "Ошибка: " + e.Message + " " + e.StackTrace, error: true);

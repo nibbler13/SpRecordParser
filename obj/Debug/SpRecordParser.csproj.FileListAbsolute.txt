@@ -8,3 +8,15 @@
 \\nnkk-fs\doks\nn-admin\мои документы\visual studio 2017\Projects\SpRecordParser\SpRecordParser\obj\Debug\SpRecordParser.pdb
 \\nnkk-fs\doks\nn-admin\мои документы\visual studio 2017\Projects\SpRecordParser\SpRecordParser\obj\Debug\SpRecordParser.FormMain.resources
 \\nnkk-fs\doks\nn-admin\мои документы\visual studio 2017\Projects\SpRecordParser\SpRecordParser\obj\Debug\SpRecordParser.csproj.ResolveComReference.cache
+C:\_Projects C#\SpRecordParser\SpRecordParser\bin\Debug\SpRecordParser.exe.config
+C:\_Projects C#\SpRecordParser\SpRecordParser\bin\Debug\SpRecordParser.exe
+C:\_Projects C#\SpRecordParser\SpRecordParser\bin\Debug\SpRecordParser.pdb
+C:\_Projects C#\SpRecordParser\SpRecordParser\obj\Debug\SpRecordParser.csproj.ResolveComReference.cache
+C:\_Projects C#\SpRecordParser\SpRecordParser\obj\Debug\SpRecordParser.FormMain.resources
+C:\_Projects C#\SpRecordParser\SpRecordParser\obj\Debug\SpRecordParser.Properties.Resources.resources
+C:\_Projects C#\SpRecordParser\SpRecordParser\obj\Debug\SpRecordParser.csproj.GenerateResource.Cache
+C:\_Projects C#\SpRecordParser\SpRecordParser\obj\Debug\SpRecordParser.exe
+C:\_Projects C#\SpRecordParser\SpRecordParser\obj\Debug\SpRecordParser.pdb
+C:\_Projects C#\SpRecordParser\SpRecordParser\obj\Debug\SpRecordParser.FormSettings.resources
+C:\_Projects C#\SpRecordParser\SpRecordParser\obj\Debug\SpRecordParser.FormAbout.resources
+C:\_Projects C#\SpRecordParser\SpRecordParser\obj\Debug\SpRecordParser.csprojResolveAssemblyReference.cache

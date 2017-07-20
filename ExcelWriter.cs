@@ -13,7 +13,6 @@ namespace SpRecordParser {
 		private ProgressBar progressBar;
 		private System.Windows.Forms.TextBox textBox;
 		Dictionary<string, SpRecordFileInformation> filesInfo;
-		int percentage;
 
 		public ExcelWriter(
 			ProgressBar progressBar, 
@@ -22,7 +21,6 @@ namespace SpRecordParser {
 			this.progressBar = progressBar;
 			this.textBox = textBox;
 			this.filesInfo = filesInfo;
-			percentage = 20;
 		}
 
 		public bool WriteToExcel() {
@@ -54,13 +52,21 @@ namespace SpRecordParser {
 					return false;
 				}
 
-				int oneFilePercentage = 70 / filesInfo.Count;
+				float initialPercent = progressBar.Value;
+				float oneFilePercentage = (90.0f - initialPercent) / (float)filesInfo.Count;
+
 				foreach(KeyValuePair<string, SpRecordFileInformation> fileInfo in filesInfo) {
 					List<List<string>> fileContent = fileInfo.Value.fileContent;
 					UpdateTextBox("Заполнение информации по файлу: " + fileInfo.Key);
 
+					float initialFilePercent = progressBar.Value;
+					float oneLinePercent = oneFilePercentage / fileContent.Count;
+
 					int rowToFill = 1;
 					foreach(List<string> line in fileContent) {
+						initialFilePercent += oneLinePercent;
+						UpdateProgressBar((int)initialFilePercent);
+
 						string columnName = GetExcelColumnName(line.Count);
 						ws.Range["A" + rowToFill + ":" + columnName + rowToFill].Value = line.ToArray();
 						
@@ -83,8 +89,8 @@ namespace SpRecordParser {
 
 					wb.Worksheets.Add(After: ws);
 					ws = (Worksheet)wb.ActiveSheet;
-					percentage += oneFilePercentage;
-					UpdateProgressBar(percentage);
+					initialPercent += oneFilePercentage;
+					UpdateProgressBar((int)initialPercent);
 				}
 
 				UpdateTextBox("Создание сводной таблицы по всем файлам");
@@ -133,9 +139,13 @@ namespace SpRecordParser {
 					"Средняя длительность",
 					"% от всех входящих",
 					"Регламент работы с непринятыми вызовами:" + Environment.NewLine +
-					"Первая попытка - не позднее 5 минут после непринятого вызова" + Environment.NewLine +
-					"Вторая попытка - от 5 до 20 минут после непринятого вызова" + Environment.NewLine +
-					"Третья попытка - от 20 до 35 минут после непринятого вызова",
+					"Первая попытка - не позднее " + Properties.Settings.Default.CallbackFirstAttemptMax +
+					" минут после непринятого вызова" + Environment.NewLine +
+					"Вторая попытка - от " + Properties.Settings.Default.CallbackFirstAttemptMax +
+					" до " + Properties.Settings.Default.CallbackSecondAttemptMax +
+					" минут после непринятого вызова" + Environment.NewLine +
+					"Третья попытка - от " + Properties.Settings.Default.CallbackSecondAttemptMax +
+					" до " + Properties.Settings.Default.CallbackThirdAttemptMax + " минут после непринятого вызова",
 					"Дозвонились с одной попытки",
 					"Дозвонились с одной попытки",
 					"Дозвонились с двух попыток",
@@ -153,7 +163,11 @@ namespace SpRecordParser {
 					"% нарушения регламента",
 					//accidental
 					"Длительность меньше 6 секунд (количество)",
-					"Неправильные данные (количество)",
+					"Некорректные данные" + (Properties.Settings.Default.CalcRepeatedMissedAsOne ? ", повторяющиеся с одним номером" : "") +
+					(Properties.Settings.Default.IgnoreInternalMissedCalls ? ", внутренние номера" : "") +
+					(Properties.Settings.Default.IgnoreNonworkingTimeMissedCalls ? ", нерабочие часы с " +
+					Properties.Settings.Default.WorkingTimeBegin.ToString() + " до " + 
+					Properties.Settings.Default.WorkingTimeEnd.ToString() : "") + " (количество)",
 					"Общая длительность",
 					//dialed
 					"% от всех входящих",
@@ -206,7 +220,7 @@ namespace SpRecordParser {
 				ws.Range[headersRange].VerticalAlignment = XlHAlign.xlHAlignCenter;
 				//ws.Range[headersRange].HorizontalAlignment = XlVAlign.xlVAlignCenter;
 				ws.Rows[14].RowHeight = 60;
-				ws.Columns[2].ColumnWidth = 39;
+				ws.Columns[2].ColumnWidth = 42;
 				ws.Columns[3].ColumnWidth = 20;
 
 				int columnToStartFill = 4;
@@ -214,56 +228,56 @@ namespace SpRecordParser {
 				foreach (KeyValuePair<string, SpRecordFileInformation> fileInfo in filesInfo) {
 					SpRecordFileInformation info = fileInfo.Value;
 
-					int callsIncoming = info.callsAccepted + info.callsMissed + 
-						info.callsAccidentialShort + info.callsAccidentialWrongValues;
-					int ringUpFailed = info.ringUpDidNotTried + 
-									   info.ringUpNotRegulationObserved + 
-									   info.ringUpNotRegulationNotObserved;
-					int regulationNotObserved = info.ringUp1tryRegulationNotObserved +
-												info.ringUp2tryRegulationNotObserved +
-												info.ringUp3tryRegulationNotObserved +
-												info.ringUp3MoreTryRegulationNotObserved +
-												info.ringUpByPatientRegulationNotObserved +
-												info.ringUpNotRegulationNotObserved +
-												info.ringUpDidNotTried;
-					int callsAccidential = info.callsAccidentialShort + info.callsAccidentialWrongValues;
+					int callsIncoming = info.CallsAccepted + info.CallsMissed + 
+						info.CallsMissedAccidentialShort + info.CallsMissedAccidentialWrongValues;
+					int ringUpFailed = info.RingUpDidNotTried + 
+									   info.RingUpNotRegulationObserved + 
+									   info.RingUpNotRegulationNotObserved;
+					int regulationNotObserved = info.RingUp1tryRegulationNotObserved +
+												info.RingUp2tryRegulationNotObserved +
+												info.RingUp3tryRegulationNotObserved +
+												info.RingUp3MoreTryRegulationNotObserved +
+												info.RingUpByPatientRegulationNotObserved +
+												info.RingUpNotRegulationNotObserved +
+												info.RingUpDidNotTried;
+					int callsAccidential = info.CallsMissedAccidentialShort + info.CallsMissedAccidentialWrongValues;
 
 					string[] values = {
 						Path.GetFileName(fileInfo.Key),				//Имя файла
-						info.workstationName,						//Имя рабочей станции
-						info.creationDate,							//Дата создания
-						info.accountingPeriod,						//Отчетный период
-						info.callsTotal.ToString(),					//Количество
-						StringFromTimeSpan(info.timeTotal),			//Общая длительность
-						info.callsAccepted.ToString(),				//Количество
-						StringFromTimeSpan(info.timeAccepted),		//Общая длительность
-						StringFromTimeSpan(GetAverageDuration(info.timeAccepted, info.callsAccepted)), //Средняя длительность
-						info.callsMissed.ToString(),				//Количество
-						StringFromTimeSpan(info.timeMissed),		//Общая длительность
-						StringFromTimeSpan(GetAverageDuration(info.timeMissed, info.callsMissed)), //Средняя длительность
-						GetPercentage(info.callsMissed, callsIncoming),	//% от всех входящих
+						info.WorkstationName,						//Имя рабочей станции
+						info.CreationDate,							//Дата создания
+						info.AccountingPeriod,						//Отчетный период
+						info.CallsTotal.ToString(),					//Количество
+						StringFromTimeSpan(info.TimeTotal),			//Общая длительность
+						info.CallsAccepted.ToString(),				//Количество
+						StringFromTimeSpan(info.TimeAccepted),		//Общая длительность
+						StringFromTimeSpan(GetAverageDuration(info.TimeAccepted, info.CallsAccepted)), //Средняя длительность
+						info.CallsMissed.ToString(),				//Количество
+						StringFromTimeSpan(info.TimeMissed),		//Общая длительность
+						StringFromTimeSpan(GetAverageDuration(info.TimeMissed, info.CallsMissed)), //Средняя длительность
+						GetPercentage(info.CallsMissed, callsIncoming),	//% от всех входящих
 						"",											//Регламент работы
-						info.ringUp1tryRegulationObserved.ToString(), //Дозвонились с одной попытки Регламент соблюден
-						info.ringUp1tryRegulationNotObserved.ToString(), //Дозвонились с одной попытки Регламент нарушен
-						info.ringUp2tryRegulationObserved.ToString(), //Дозвонились с двух попыток Регламент соблюден
-						info.ringUp2tryRegulationNotObserved.ToString(), //Дозвонились с двух попыток Регламент нарушен
-						info.ringUp3tryRegulationObserved.ToString(), //Дозвонились с трех попыток Регламент соблюден
-						info.ringUp3tryRegulationNotObserved.ToString(), //Дозвонились с трех попыток Регламент нарушен
-						info.ringUp3MoreTryRegulationObserved.ToString(), //Дозвонились с более чем трех попыток Регламент соблюден
-						info.ringUp3MoreTryRegulationNotObserved.ToString(), //Дозвонились с более чем трех попыток Регламент нарушен
-						info.ringUpByPatientRegulationObserved.ToString(), //Пациент перезвонил самостоятельно Регламент соблюден
-						info.ringUpByPatientRegulationNotObserved.ToString(), //Пациент перезвонил самостоятельно Регламент нарушен
-						info.ringUpNotRegulationObserved.ToString(), //Не дозвонились Регламент соблюден
-						info.ringUpNotRegulationNotObserved.ToString(), //Не дозвонились Регламент нарушен
-						info.ringUpDidNotTried.ToString(), //Не пытались перезвонить Регламент нарушен
-						GetPercentage(ringUpFailed, info.callsMissed), //% недозвона
-						GetPercentage(regulationNotObserved, info.callsMissed), //% нарушения регламента
-						info.callsAccidentialShort.ToString(),			//Длительность меньше 6 секунд (количество)
-						info.callsAccidentialWrongValues.ToString(),		//Неправильные данные (количество)
-						StringFromTimeSpan(info.timeAccidential),	//Общая длительность
+						info.RingUp1tryRegulationObserved.ToString(), //Дозвонились с одной попытки Регламент соблюден
+						info.RingUp1tryRegulationNotObserved.ToString(), //Дозвонились с одной попытки Регламент нарушен
+						info.RingUp2tryRegulationObserved.ToString(), //Дозвонились с двух попыток Регламент соблюден
+						info.RingUp2tryRegulationNotObserved.ToString(), //Дозвонились с двух попыток Регламент нарушен
+						info.RingUp3tryRegulationObserved.ToString(), //Дозвонились с трех попыток Регламент соблюден
+						info.RingUp3tryRegulationNotObserved.ToString(), //Дозвонились с трех попыток Регламент нарушен
+						info.RingUp3MoreTryRegulationObserved.ToString(), //Дозвонились с более чем трех попыток Регламент соблюден
+						info.RingUp3MoreTryRegulationNotObserved.ToString(), //Дозвонились с более чем трех попыток Регламент нарушен
+						info.RingUpByPatientRegulationObserved.ToString(), //Пациент перезвонил самостоятельно Регламент соблюден
+						info.RingUpByPatientRegulationNotObserved.ToString(), //Пациент перезвонил самостоятельно Регламент нарушен
+						info.RingUpNotRegulationObserved.ToString(), //Не дозвонились Регламент соблюден
+						info.RingUpNotRegulationNotObserved.ToString(), //Не дозвонились Регламент нарушен
+						info.RingUpDidNotTried.ToString(), //Не пытались перезвонить Регламент нарушен
+						GetPercentage(ringUpFailed, info.CallsMissed), //% недозвона
+						GetPercentage(regulationNotObserved, info.CallsMissed), //% нарушения регламента
+						info.CallsMissedAccidentialShort.ToString(),			//Длительность меньше 6 секунд (количество)
+						info.CallsMissedAccidentialWrongValues.ToString(),		//Неправильные данные (количество)
+						StringFromTimeSpan(info.TimeAccidential),	//Общая длительность
 						GetPercentage(callsAccidential, callsIncoming), //% от всех входящих
-						info.callsDialed.ToString(),				//Количество
-						StringFromTimeSpan(info.timeDialed),		//Общая длительность
+						info.CallsDialed.ToString(),				//Количество
+						StringFromTimeSpan(info.TimeDialed),		//Общая длительность
 						"Лист " + listStartPosition};			//Расположение
 
 					int rowToFillValues = 1;
@@ -277,10 +291,10 @@ namespace SpRecordParser {
 
 					int colorIndex = 0;
 					if (callsIncoming > 0) {
-						double missedPercetage = (double)info.callsMissed / (double)callsIncoming * 100;
-						if (missedPercetage <= 4.0) {
+						double missedPercetage = (double)info.CallsMissed / (double)callsIncoming * 100;
+						if (missedPercetage <= Properties.Settings.Default.MissedCallsGoodMax) {
 							colorIndex = 36; //green
-						} else if (missedPercetage > 6.0) {
+						} else if (missedPercetage > Properties.Settings.Default.MissedCallsBadMin) {
 							colorIndex = 3; //red
 						} else {
 							colorIndex = 6; //yellow
@@ -292,12 +306,12 @@ namespace SpRecordParser {
 						}
 					}
 
-					if (info.callsMissed > 0) {
+					if (info.CallsMissed > 0) {
 						double regulationsNotObservedPercentage =
-							(double)regulationNotObserved / (double)info.callsMissed * 100;
-						if (regulationsNotObservedPercentage <= 5.0) {
+							(double)regulationNotObserved / (double)info.CallsMissed * 100;
+						if (regulationsNotObservedPercentage <= Properties.Settings.Default.RegulationGoodMax) {
 							colorIndex = 36; //green
-						} else if (regulationsNotObservedPercentage > 15.0) {
+						} else if (regulationsNotObservedPercentage > Properties.Settings.Default.RegulationBadMin) {
 							colorIndex = 3; //red
 						} else {
 							colorIndex = 6; //yellow
