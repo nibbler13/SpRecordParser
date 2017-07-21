@@ -165,8 +165,8 @@ namespace SpRecordParser {
 					"Длительность меньше 6 секунд (количество)",
 					"Некорректные данные" + (Properties.Settings.Default.CalcRepeatedMissedAsOne ? ", повторяющиеся с одним номером" : "") +
 					(Properties.Settings.Default.IgnoreInternalMissedCalls ? ", внутренние номера" : "") +
-					(Properties.Settings.Default.IgnoreNonworkingTimeMissedCalls ? ", нерабочие часы с " +
-					Properties.Settings.Default.WorkingTimeBegin.ToString() + " до " + 
+					(Properties.Settings.Default.IgnoreNonworkingTimeMissedCalls ? ", нерабочие часы до " +
+					Properties.Settings.Default.WorkingTimeBegin.ToString() + " и после " + 
 					Properties.Settings.Default.WorkingTimeEnd.ToString() : "") + " (количество)",
 					"Общая длительность",
 					//dialed

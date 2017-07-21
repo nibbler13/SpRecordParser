@@ -26,11 +26,13 @@
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormAbout));
 			this.labelBottomHelp = new System.Windows.Forms.Label();
 			this.label1 = new System.Windows.Forms.Label();
-			this.label2 = new System.Windows.Forms.Label();
 			this.label3 = new System.Windows.Forms.Label();
 			this.pictureBox3 = new System.Windows.Forms.PictureBox();
 			this.pictureBox2 = new System.Windows.Forms.PictureBox();
 			this.pictureBox1 = new System.Windows.Forms.PictureBox();
+			this.label4 = new System.Windows.Forms.Label();
+			this.label5 = new System.Windows.Forms.Label();
+			this.label6 = new System.Windows.Forms.Label();
 			((System.ComponentModel.ISupportInitialize)(this.pictureBox3)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
@@ -40,46 +42,41 @@
 			// 
 			this.labelBottomHelp.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-			this.labelBottomHelp.Location = new System.Drawing.Point(12, 9);
+			this.labelBottomHelp.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+			this.labelBottomHelp.Location = new System.Drawing.Point(12, 102);
 			this.labelBottomHelp.Name = "labelBottomHelp";
-			this.labelBottomHelp.Size = new System.Drawing.Size(390, 94);
+			this.labelBottomHelp.Size = new System.Drawing.Size(390, 32);
 			this.labelBottomHelp.TabIndex = 8;
-			this.labelBottomHelp.Text = resources.GetString("labelBottomHelp.Text");
+			this.labelBottomHelp.Text = "Для анализа требуются файлы формата CSV, выгружаемые из программы SpRecord (требу" +
+    "ется версия не ниже 3.99):";
+			this.labelBottomHelp.TextAlign = System.Drawing.ContentAlignment.TopCenter;
 			// 
 			// label1
 			// 
-			this.label1.Location = new System.Drawing.Point(12, 298);
-			this.label1.Margin = new System.Windows.Forms.Padding(3, 10, 3, 0);
+			this.label1.Location = new System.Drawing.Point(12, 339);
+			this.label1.Margin = new System.Windows.Forms.Padding(3, 20, 3, 0);
 			this.label1.Name = "label1";
-			this.label1.Size = new System.Drawing.Size(390, 46);
+			this.label1.Size = new System.Drawing.Size(390, 19);
 			this.label1.TabIndex = 11;
-			this.label1.Text = "Порядок столбцов: \r\nНазвание канала, Время записи, Длительность, Тип записи, Номе" +
-    "р абонента, Ext, CO, Тип CO, Комментарий:";
-			// 
-			// label2
-			// 
-			this.label2.AutoSize = true;
-			this.label2.Location = new System.Drawing.Point(12, 429);
-			this.label2.Margin = new System.Windows.Forms.Padding(3, 10, 3, 0);
-			this.label2.Name = "label2";
-			this.label2.Size = new System.Drawing.Size(218, 13);
-			this.label2.TabIndex = 13;
-			this.label2.Text = "Требуется версия SpRecord не ниже 3.99";
+			this.label1.Text = "Обязательно требуется включить отображение комментариев:";
+			this.label1.TextAlign = System.Drawing.ContentAlignment.TopCenter;
 			// 
 			// label3
 			// 
 			this.label3.AutoSize = true;
-			this.label3.Location = new System.Drawing.Point(12, 469);
+			this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+			this.label3.Location = new System.Drawing.Point(63, 32);
 			this.label3.Margin = new System.Windows.Forms.Padding(3, 10, 3, 0);
 			this.label3.Name = "label3";
-			this.label3.Size = new System.Drawing.Size(364, 13);
+			this.label3.Size = new System.Drawing.Size(289, 26);
 			this.label3.TabIndex = 14;
-			this.label3.Text = "Автор: Грашкин Павел / nn-admin@bzklinika.ru / отдел бизнес-анализа";
+			this.label3.Text = "Автор: Грашкин Павел / отдел бизнес-анализа\r\nnn-admin@bzklinika.ru";
+			this.label3.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
 			// 
 			// pictureBox3
 			// 
 			this.pictureBox3.Image = global::SpRecordParser.Properties.Resources.Save4;
-			this.pictureBox3.Location = new System.Drawing.Point(12, 347);
+			this.pictureBox3.Location = new System.Drawing.Point(12, 361);
 			this.pictureBox3.Name = "pictureBox3";
 			this.pictureBox3.Size = new System.Drawing.Size(390, 69);
 			this.pictureBox3.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
@@ -89,7 +86,7 @@
 			// pictureBox2
 			// 
 			this.pictureBox2.Image = global::SpRecordParser.Properties.Resources.Save2;
-			this.pictureBox2.Location = new System.Drawing.Point(12, 210);
+			this.pictureBox2.Location = new System.Drawing.Point(12, 241);
 			this.pictureBox2.Name = "pictureBox2";
 			this.pictureBox2.Size = new System.Drawing.Size(390, 75);
 			this.pictureBox2.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
@@ -99,19 +96,52 @@
 			// pictureBox1
 			// 
 			this.pictureBox1.Image = global::SpRecordParser.Properties.Resources.Save1;
-			this.pictureBox1.Location = new System.Drawing.Point(85, 106);
+			this.pictureBox1.Location = new System.Drawing.Point(85, 137);
 			this.pictureBox1.Name = "pictureBox1";
 			this.pictureBox1.Size = new System.Drawing.Size(244, 98);
 			this.pictureBox1.TabIndex = 9;
 			this.pictureBox1.TabStop = false;
 			// 
+			// label4
+			// 
+			this.label4.AutoSize = true;
+			this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+			this.label4.Location = new System.Drawing.Point(141, 9);
+			this.label4.Name = "label4";
+			this.label4.Size = new System.Drawing.Size(132, 13);
+			this.label4.TabIndex = 15;
+			this.label4.Text = "SpRecordParser v.1.1";
+			// 
+			// label5
+			// 
+			this.label5.Location = new System.Drawing.Point(12, 68);
+			this.label5.Margin = new System.Windows.Forms.Padding(3, 10, 3, 0);
+			this.label5.Name = "label5";
+			this.label5.Size = new System.Drawing.Size(390, 32);
+			this.label5.TabIndex = 16;
+			this.label5.Text = "Данная программа предназначения для анализа журнала звонков SpRecord в соответств" +
+    "ии с регламентами ООО \"Клиника ЛМС\".";
+			this.label5.TextAlign = System.Drawing.ContentAlignment.TopCenter;
+			// 
+			// label6
+			// 
+			this.label6.AutoSize = true;
+			this.label6.Location = new System.Drawing.Point(130, 466);
+			this.label6.Name = "label6";
+			this.label6.Size = new System.Drawing.Size(155, 13);
+			this.label6.TabIndex = 17;
+			this.label6.Text = "ООО \"Клиника ЛМС\", 2017 г.";
+			// 
 			// FormAbout
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+			this.BackColor = System.Drawing.SystemColors.Window;
 			this.ClientSize = new System.Drawing.Size(414, 491);
+			this.Controls.Add(this.label6);
+			this.Controls.Add(this.label5);
+			this.Controls.Add(this.label4);
 			this.Controls.Add(this.label3);
-			this.Controls.Add(this.label2);
 			this.Controls.Add(this.pictureBox3);
 			this.Controls.Add(this.label1);
 			this.Controls.Add(this.pictureBox2);
@@ -139,7 +169,9 @@
 		private System.Windows.Forms.PictureBox pictureBox2;
 		private System.Windows.Forms.Label label1;
 		private System.Windows.Forms.PictureBox pictureBox3;
-		private System.Windows.Forms.Label label2;
 		private System.Windows.Forms.Label label3;
+		private System.Windows.Forms.Label label4;
+		private System.Windows.Forms.Label label5;
+		private System.Windows.Forms.Label label6;
 	}
 }
