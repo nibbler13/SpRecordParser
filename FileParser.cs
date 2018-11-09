@@ -99,7 +99,7 @@ namespace SpRecordParser {
 			for (int row = fileContent.Count - 2; row >= 0; row--) {
 				List<string> line = fileContent[row];
 
-				if (line.Count < 9 && line.Count != 1) {
+				if (line.Count < 8 && line.Count != 1) {
 					UpdateTextBox("Размер строки " + (row + 1) + " не совпадает с форматом SpRecord");
 					continue;
 				}
@@ -117,46 +117,108 @@ namespace SpRecordParser {
 						ParseLineCreationDate(text, ref fileInformation);
 				}
 
-				if (line.Count >= 9) {
+				if (line.Count >= 8) {
 					if (line[0].Equals("Название канала"))
 						continue;
 
-					TimeSpan duration = ParseTimeSpan(line[2]);
-					string type = line[3];
+					try {
+						DateTime dateTime = DateTime.Parse(line[1]);
+						dateTime = dateTime.AddMilliseconds(dateTime.TimeOfDay.TotalMilliseconds * -1);
 
-					if (type.Contains("Принятый")) {
-						fileInformation.CallsAccepted++;
-						fileInformation.TimeAccepted = fileInformation.TimeAccepted.Add(duration);
-					} else if (type.Contains("Набранный")) {
-						fileInformation.CallsDialed++;
-						fileInformation.TimeDialed = fileInformation.TimeDialed.Add(duration);
-					} else if (type.Contains("Непринятый")) {
-						if (line.Count > 9) {
-							fileInformation.CallsMissedAccidentialWrongValues++;
-							fileInformation.TimeAccidential = fileInformation.TimeAccidential.Add(duration);
-							continue;
-						}
+						if (!fileInformation.DaysInfo.ContainsKey(dateTime))
+							fileInformation.DaysInfo.Add(dateTime, new SpRecordFileInformation.DayInfo());
 
-						if (duration.TotalSeconds <= 5) {
-							fileInformation.CallsMissedAccidentialShort++;
-							fileInformation.TimeAccidential = fileInformation.TimeAccidential.Add(duration);
-							fileContent[row].Add("Ошибочный, длительность меньше 6 секунд");
-						} else {
-							if (IsAnalysingAMissedCallSucceed(row, ref fileInformation, ref fileContent)) {
-								fileInformation.CallsMissed++;
-								fileInformation.TimeMissed = fileInformation.TimeMissed.Add(duration);
-							} else {
-								fileInformation.CallsMissedAccidentialWrongValues++;
-								fileInformation.TimeAccidential = fileInformation.TimeAccidential.Add(duration);
+						SpRecordFileInformation.DayInfo dayInfo = fileInformation.DaysInfo[dateTime];
+
+						TimeSpan duration = ParseTimeSpan(line[2]);
+						double totalSeconds = duration.TotalSeconds;
+						string phoneNumbers = line[4];
+
+						if (phoneNumbers.EndsWith("-> 601") || phoneNumbers.EndsWith("-> 611")) {
+							dayInfo.TotalIncoming++;
+
+							if (totalSeconds <= 5) {
+								dayInfo.IncrementMissedCallCount(
+									SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostSelf5sec);
+							} else if (totalSeconds > 5 && totalSeconds <= 10) {
+								dayInfo.IncrementMissedCallCount(
+									SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostSelf10sec);
+							} else if (totalSeconds > 10 && totalSeconds <= 15) {
+								dayInfo.IncrementMissedCallCount(
+									SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostSelf15sec);
+							} else if (totalSeconds > 15 && totalSeconds <= 20) {
+								dayInfo.IncrementMissedCallCount(
+									SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostSelf20sec);
+							} else if (totalSeconds > 20 && totalSeconds <= 25) {
+								dayInfo.IncrementMissedCallCount(
+									SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostSelf25sec);
+							} else if (totalSeconds > 25 && totalSeconds <= 30) {
+								dayInfo.IncrementMissedCallCount(
+									SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostSelf30sec);
+							}
+						} else if (phoneNumbers.EndsWith("-> 30400")) {
+							dayInfo.TotalRedirected++;
+
+							if (totalSeconds <= 5) {
+								dayInfo.IncrementMissedCallCount(
+									SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostRedirected5sec);
+							} else if (totalSeconds > 5 && totalSeconds <= 10) {
+								dayInfo.IncrementMissedCallCount(
+									SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostRedirected10sec);
+							} else if (totalSeconds > 10 && totalSeconds <= 15) {
+								dayInfo.IncrementMissedCallCount(
+									SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostRedirected15sec);
+							} else if (totalSeconds > 15 && totalSeconds <= 20) {
+								dayInfo.IncrementMissedCallCount(
+									SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostRedirected20sec);
+							} else if (totalSeconds > 20 && totalSeconds <= 25) {
+								dayInfo.IncrementMissedCallCount(
+									SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostRedirected25sec);
+							} else if (totalSeconds > 25 && totalSeconds <= 30) {
+								dayInfo.IncrementMissedCallCount(
+									SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostRedirected30sec);
 							}
 						}
-					} else {
-						UpdateTextBox("Неизвестный тип звонка: " + type);
+					} catch (Exception e) {
+						Console.WriteLine(e.Message + Environment.NewLine + e.StackTrace);
 					}
+
+					//TimeSpan duration = ParseTimeSpan(line[2]);
+					//string type = line[3];
+
+					//if (type.Contains("Принятый")) {
+					//	fileInformation.CallsAccepted++;
+					//	fileInformation.TimeAccepted = fileInformation.TimeAccepted.Add(duration);
+					//} else if (type.Contains("Набранный")) {
+					//	fileInformation.CallsDialed++;
+					//	fileInformation.TimeDialed = fileInformation.TimeDialed.Add(duration);
+					//} else if (type.Contains("Непринятый")) {
+					//	if (line.Count > 9) {
+					//		fileInformation.CallsMissedAccidentialWrongValues++;
+					//		fileInformation.TimeAccidential = fileInformation.TimeAccidential.Add(duration);
+					//		continue;
+					//	}
+
+					//	if (duration.TotalSeconds <= 5) {
+					//		fileInformation.CallsMissedAccidentialShort++;
+					//		fileInformation.TimeAccidential = fileInformation.TimeAccidential.Add(duration);
+					//		fileContent[row].Add("Ошибочный, длительность меньше 6 секунд");
+					//	} else {
+					//		if (IsAnalysingAMissedCallSucceed(row, ref fileInformation, ref fileContent)) {
+					//			fileInformation.CallsMissed++;
+					//			fileInformation.TimeMissed = fileInformation.TimeMissed.Add(duration);
+					//		} else {
+					//			fileInformation.CallsMissedAccidentialWrongValues++;
+					//			fileInformation.TimeAccidential = fileInformation.TimeAccidential.Add(duration);
+					//		}
+					//	}
+					//} else {
+					//	UpdateTextBox("Неизвестный тип звонка: " + type);
+					//}
 				}
 			}
 
-			fileInformation.fileContent = fileContent;
+			fileInformation.FileContent = fileContent;
 			filesInfo.Add(fileName, fileInformation);
 		}
 

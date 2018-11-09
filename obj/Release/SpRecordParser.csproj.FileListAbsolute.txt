@@ -11,7 +11,6 @@
 C:\_Projects C#\SpRecordParser\SpRecordParser\bin\Release\SpRecordParser.exe.config
 C:\_Projects C#\SpRecordParser\SpRecordParser\bin\Release\SpRecordParser.exe
 C:\_Projects C#\SpRecordParser\SpRecordParser\bin\Release\SpRecordParser.pdb
-C:\_Projects C#\SpRecordParser\SpRecordParser\obj\Release\SpRecordParser.csprojResolveAssemblyReference.cache
 C:\_Projects C#\SpRecordParser\SpRecordParser\obj\Release\SpRecordParser.csproj.ResolveComReference.cache
 C:\_Projects C#\SpRecordParser\SpRecordParser\obj\Release\SpRecordParser.FormAbout.resources
 C:\_Projects C#\SpRecordParser\SpRecordParser\obj\Release\SpRecordParser.FormMain.resources
@@ -20,3 +19,5 @@ C:\_Projects C#\SpRecordParser\SpRecordParser\obj\Release\SpRecordParser.Propert
 C:\_Projects C#\SpRecordParser\SpRecordParser\obj\Release\SpRecordParser.csproj.GenerateResource.Cache
 C:\_Projects C#\SpRecordParser\SpRecordParser\obj\Release\SpRecordParser.exe
 C:\_Projects C#\SpRecordParser\SpRecordParser\obj\Release\SpRecordParser.pdb
+C:\_Projects C#\SpRecordParser\SpRecordParser\obj\Release\SpRecordParser.csprojAssemblyReference.cache
+C:\_Projects C#\SpRecordParser\SpRecordParser\obj\Release\SpRecordParser.csproj.CoreCompileInputs.cache

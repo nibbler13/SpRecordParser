@@ -19,4 +19,5 @@ C:\_Projects C#\SpRecordParser\SpRecordParser\obj\Debug\SpRecordParser.exe
 C:\_Projects C#\SpRecordParser\SpRecordParser\obj\Debug\SpRecordParser.pdb
 C:\_Projects C#\SpRecordParser\SpRecordParser\obj\Debug\SpRecordParser.FormSettings.resources
 C:\_Projects C#\SpRecordParser\SpRecordParser\obj\Debug\SpRecordParser.FormAbout.resources
-C:\_Projects C#\SpRecordParser\SpRecordParser\obj\Debug\SpRecordParser.csprojResolveAssemblyReference.cache
+C:\_Projects C#\SpRecordParser\SpRecordParser\obj\Debug\SpRecordParser.csprojAssemblyReference.cache
+C:\_Projects C#\SpRecordParser\SpRecordParser\obj\Debug\SpRecordParser.csproj.CoreCompileInputs.cache

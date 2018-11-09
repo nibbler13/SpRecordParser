@@ -47,14 +47,14 @@
 			this.toolStripMenuItemSettings.Name = "toolStripMenuItemSettings";
 			this.toolStripMenuItemSettings.Size = new System.Drawing.Size(79, 20);
 			this.toolStripMenuItemSettings.Text = "Настройки";
-			this.toolStripMenuItemSettings.Click += new System.EventHandler(this.settingsToolStripMenuItem_Click);
+			this.toolStripMenuItemSettings.Click += new System.EventHandler(this.SettingsToolStripMenuItem_Click);
 			// 
 			// toolStripMenuItemAbout
 			// 
 			this.toolStripMenuItemAbout.Name = "toolStripMenuItemAbout";
 			this.toolStripMenuItemAbout.Size = new System.Drawing.Size(94, 20);
 			this.toolStripMenuItemAbout.Text = "О программе";
-			this.toolStripMenuItemAbout.Click += new System.EventHandler(this.aboutToolStripMenuItem1_Click);
+			this.toolStripMenuItemAbout.Click += new System.EventHandler(this.AboutToolStripMenuItem1_Click);
 			// 
 			// buttonDelete
 			// 
@@ -66,7 +66,7 @@
 			this.buttonDelete.TabIndex = 2;
 			this.buttonDelete.Text = "Удалить";
 			this.buttonDelete.UseVisualStyleBackColor = true;
-			this.buttonDelete.Click += new System.EventHandler(this.buttonDelete_Click);
+			this.buttonDelete.Click += new System.EventHandler(this.ButtonDelete_Click);
 			// 
 			// listViewFiles
 			// 
@@ -97,7 +97,7 @@
 			this.buttonAdd.TabIndex = 1;
 			this.buttonAdd.Text = "Добавить";
 			this.buttonAdd.UseVisualStyleBackColor = true;
-			this.buttonAdd.Click += new System.EventHandler(this.buttonAdd_Click);
+			this.buttonAdd.Click += new System.EventHandler(this.ButtonAdd_Click);
 			// 
 			// labelListTitle
 			// 
@@ -120,7 +120,7 @@
 			this.buttonAnalyse.TabIndex = 3;
 			this.buttonAnalyse.Text = "Выполнить анализ";
 			this.buttonAnalyse.UseVisualStyleBackColor = true;
-			this.buttonAnalyse.Click += new System.EventHandler(this.buttonAnalyse_Click);
+			this.buttonAnalyse.Click += new System.EventHandler(this.ButtonAnalyse_Click);
 			// 
 			// progressBar
 			// 
@@ -150,14 +150,14 @@
 			this.настройкиToolStripMenuItem.Name = "настройкиToolStripMenuItem";
 			this.настройкиToolStripMenuItem.Size = new System.Drawing.Size(79, 20);
 			this.настройкиToolStripMenuItem.Text = "Настройки";
-			this.настройкиToolStripMenuItem.Click += new System.EventHandler(this.settingsToolStripMenuItem_Click);
+			this.настройкиToolStripMenuItem.Click += new System.EventHandler(this.SettingsToolStripMenuItem_Click);
 			// 
 			// оПрограммеToolStripMenuItem
 			// 
 			this.оПрограммеToolStripMenuItem.Name = "оПрограммеToolStripMenuItem";
 			this.оПрограммеToolStripMenuItem.Size = new System.Drawing.Size(94, 20);
 			this.оПрограммеToolStripMenuItem.Text = "О программе";
-			this.оПрограммеToolStripMenuItem.Click += new System.EventHandler(this.aboutToolStripMenuItem1_Click);
+			this.оПрограммеToolStripMenuItem.Click += new System.EventHandler(this.AboutToolStripMenuItem1_Click);
 			// 
 			// menuStrip1
 			// 
@@ -172,17 +172,18 @@
 			// 
 			// dfdsfToolStripMenuItem
 			// 
+			this.dfdsfToolStripMenuItem.Enabled = false;
 			this.dfdsfToolStripMenuItem.Name = "dfdsfToolStripMenuItem";
 			this.dfdsfToolStripMenuItem.Size = new System.Drawing.Size(79, 20);
 			this.dfdsfToolStripMenuItem.Text = "Настройки";
-			this.dfdsfToolStripMenuItem.Click += new System.EventHandler(this.settingsToolStripMenuItem_Click);
+			this.dfdsfToolStripMenuItem.Click += new System.EventHandler(this.SettingsToolStripMenuItem_Click);
 			// 
 			// оПрограммеToolStripMenuItem1
 			// 
 			this.оПрограммеToolStripMenuItem1.Name = "оПрограммеToolStripMenuItem1";
 			this.оПрограммеToolStripMenuItem1.Size = new System.Drawing.Size(94, 20);
 			this.оПрограммеToolStripMenuItem1.Text = "О программе";
-			this.оПрограммеToolStripMenuItem1.Click += new System.EventHandler(this.aboutToolStripMenuItem1_Click);
+			this.оПрограммеToolStripMenuItem1.Click += new System.EventHandler(this.AboutToolStripMenuItem1_Click);
 			// 
 			// FormMain
 			// 

@@ -37,7 +37,7 @@ namespace SpRecordParser {
 			buttonDelete.Enabled = listViewFiles.SelectedItems.Count > 0;
 		}
 
-		private void buttonAdd_Click(object sender, EventArgs e) {
+		private void ButtonAdd_Click(object sender, EventArgs e) {
 			OpenFileDialog openFileDialog = new OpenFileDialog();
 			openFileDialog.Filter = "Список записей SpRecord (*.csv)|*.csv";
 			openFileDialog.CheckFileExists = true;
@@ -61,7 +61,7 @@ namespace SpRecordParser {
 
 		}
 
-		private void buttonDelete_Click(object sender, EventArgs e) {
+		private void ButtonDelete_Click(object sender, EventArgs e) {
 			foreach(ListViewItem item in listViewFiles.SelectedItems)
 				listViewFiles.Items.Remove(item);
 
@@ -70,7 +70,7 @@ namespace SpRecordParser {
 					control.Enabled = false;
 		}
 
-		private void buttonAnalyse_Click(object sender, EventArgs e) {
+		private void ButtonAnalyse_Click(object sender, EventArgs e) {
 			foreach (Control control in controlsToVisible)
 				control.Visible = false;
 			
@@ -90,12 +90,12 @@ namespace SpRecordParser {
 			fileParser.ParseFiles(selectedFiles);
 		}
 
-		private void settingsToolStripMenuItem_Click(object sender, EventArgs e) {
+		private void SettingsToolStripMenuItem_Click(object sender, EventArgs e) {
 		FormSettings formSettings = new FormSettings();
 		formSettings.ShowDialog();
 	}
 
-		private void aboutToolStripMenuItem1_Click(object sender, EventArgs e) {
+		private void AboutToolStripMenuItem1_Click(object sender, EventArgs e) {
 			FormAbout formAbout = new FormAbout();
 			formAbout.ShowDialog();
 		}
