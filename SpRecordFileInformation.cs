@@ -67,6 +67,7 @@ namespace SpRecordParser {
 			}
 
 			public int TotalIncoming { get; set; }
+			public int TotalMissed { get; set; }
 			public int TotalRedirected { get; set; }
 
 			private readonly Dictionary<MissedCallType, int> missedCalls = new Dictionary<MissedCallType, int>() {

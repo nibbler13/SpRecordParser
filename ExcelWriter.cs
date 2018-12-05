@@ -76,6 +76,8 @@ namespace SpRecordParser {
 						object[] values = new object[] {
 							dayInfo.Key.ToShortDateString(),
 							dayInfo.Value.TotalIncoming,
+							dayInfo.Value.TotalMissed,
+							dayInfo.Value.TotalIncoming > 0 ? (double)dayInfo.Value.TotalMissed / (double)dayInfo.Value.TotalIncoming : 0,
 							dayInfo.Value.TotalRedirected,
 							dayInfo.Value.GetMissedCallCount(SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostSelf5sec),
 							dayInfo.Value.GetMissedCallCount(SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostSelf10sec),
@@ -105,9 +107,9 @@ namespace SpRecordParser {
 						UpdateProgressBar((int)initialPercent);
 					}
 
-					ws.Range["A3:Q3"].Select();
+					ws.Range["A3:S3"].Select();
 					xlApp.Selection.Copy();
-					ws.Range["A4:Q" + row].Select();
+					ws.Range["A4:S" + row].Select();
 					xlApp.Selection.PasteSpecial(XlPasteType.xlPasteFormats, Microsoft.Office.Interop.Excel.Constants.xlNone, false, false);
 					ws.Range["A1"].Select();
 
@@ -128,7 +130,9 @@ namespace SpRecordParser {
 						"=SUM(N3:N" + (row - 1) + ")",
 						"=SUM(O3:O" + (row - 1) + ")",
 						"=SUM(P3:P" + (row - 1) + ")",
-						"=P" + row + "/B" + row
+						"=SUM(Q3:Q" + (row - 1) + ")",
+						"=SUM(R3:R" + (row - 1) + ")",
+						"=S" + row + "/S" + row
 					};
 
 					int columnTotal = 2;
@@ -139,8 +143,8 @@ namespace SpRecordParser {
 
 					ws.Range["A" + (row + 1)].Value = "Имя системы: " + fileInformation.WorkstationName;
 					
-					ws.Range["A" + row + ":Q" + row].Borders.LineStyle = XlLineStyle.xlContinuous;
-					ws.Range["A" + row + ":Q" + row].BorderAround2(XlLineStyle.xlContinuous, XlBorderWeight.xlMedium);
+					ws.Range["A" + row + ":S" + row].Borders.LineStyle = XlLineStyle.xlContinuous;
+					ws.Range["A" + row + ":S" + row].BorderAround2(XlLineStyle.xlContinuous, XlBorderWeight.xlMedium);
 
 					string pathToSave = Path.Combine(folderToSave, "Анализ звонков - " + fileInformation.WorkstationName + " - " + 
 						DateTime.Now.ToString("yyyyMMdd hhmmss") + ".xlsx");

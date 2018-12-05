@@ -96,13 +96,11 @@ namespace SpRecordParser {
 
 			SpRecordFileInformation fileInformation = ParseLastRow(lastRowText);
 
-			for (int row = fileContent.Count - 2; row >= 0; row--) {
-				List<string> line = fileContent[row];
+			for (int row = 0; row < 5; row++) {
+				if (row >= fileContent.Count)
+					break;
 
-				if (line.Count < 8 && line.Count != 1) {
-					UpdateTextBox("Размер строки " + (row + 1) + " не совпадает с форматом SpRecord");
-					continue;
-				}
+				List<string> line = fileContent[row];
 
 				if (line.Count == 1) {
 					string text = line[0];
@@ -115,6 +113,15 @@ namespace SpRecordParser {
 
 					if (text.StartsWith("Отчет создан"))
 						ParseLineCreationDate(text, ref fileInformation);
+				}
+			}
+
+			for (int row = fileContent.Count - 2; row >= 0; row--) {
+				List<string> line = fileContent[row];
+
+				if (line.Count < 8 && line.Count != 1) {
+					UpdateTextBox("Размер строки " + (row + 1) + " не совпадает с форматом SpRecord");
+					continue;
 				}
 
 				if (line.Count >= 8) {
@@ -132,52 +139,13 @@ namespace SpRecordParser {
 
 						TimeSpan duration = ParseTimeSpan(line[2]);
 						double totalSeconds = duration.TotalSeconds;
+						string callType = line[3];
 						string phoneNumbers = line[4];
 
-						if (phoneNumbers.EndsWith("-> 601") || phoneNumbers.EndsWith("-> 611")) {
-							dayInfo.TotalIncoming++;
-
-							if (totalSeconds <= 5) {
-								dayInfo.IncrementMissedCallCount(
-									SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostSelf5sec);
-							} else if (totalSeconds > 5 && totalSeconds <= 10) {
-								dayInfo.IncrementMissedCallCount(
-									SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostSelf10sec);
-							} else if (totalSeconds > 10 && totalSeconds <= 15) {
-								dayInfo.IncrementMissedCallCount(
-									SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostSelf15sec);
-							} else if (totalSeconds > 15 && totalSeconds <= 20) {
-								dayInfo.IncrementMissedCallCount(
-									SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostSelf20sec);
-							} else if (totalSeconds > 20 && totalSeconds <= 25) {
-								dayInfo.IncrementMissedCallCount(
-									SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostSelf25sec);
-							} else if (totalSeconds > 25 && totalSeconds <= 30) {
-								dayInfo.IncrementMissedCallCount(
-									SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostSelf30sec);
-							}
-						} else if (phoneNumbers.EndsWith("-> 30400")) {
-							dayInfo.TotalRedirected++;
-
-							if (totalSeconds <= 5) {
-								dayInfo.IncrementMissedCallCount(
-									SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostRedirected5sec);
-							} else if (totalSeconds > 5 && totalSeconds <= 10) {
-								dayInfo.IncrementMissedCallCount(
-									SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostRedirected10sec);
-							} else if (totalSeconds > 10 && totalSeconds <= 15) {
-								dayInfo.IncrementMissedCallCount(
-									SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostRedirected15sec);
-							} else if (totalSeconds > 15 && totalSeconds <= 20) {
-								dayInfo.IncrementMissedCallCount(
-									SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostRedirected20sec);
-							} else if (totalSeconds > 20 && totalSeconds <= 25) {
-								dayInfo.IncrementMissedCallCount(
-									SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostRedirected25sec);
-							} else if (totalSeconds > 25 && totalSeconds <= 30) {
-								dayInfo.IncrementMissedCallCount(
-									SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostRedirected30sec);
-							}
+						if (fileInformation.WorkstationName.ToLower().Contains("splp")) {
+							ParseLineForSplp(phoneNumbers, totalSeconds, ref dayInfo);
+						} else if (fileInformation.WorkstationName.ToLower().Contains("kdtt")) {
+							ParseLineForKdtt(callType, totalSeconds, ref dayInfo);
 						}
 					} catch (Exception e) {
 						Console.WriteLine(e.Message + Environment.NewLine + e.StackTrace);
@@ -220,6 +188,84 @@ namespace SpRecordParser {
 
 			fileInformation.FileContent = fileContent;
 			filesInfo.Add(fileName, fileInformation);
+		}
+
+		private void ParseLineForKdtt(string callType, double totalSeconds, ref SpRecordFileInformation.DayInfo dayInfo) {
+			callType = callType.ToLower();
+
+			if (callType.Contains("непринятый")) {
+				dayInfo.TotalMissed++;
+			} else if (callType.Contains("принятый")) {
+				dayInfo.TotalIncoming++;
+
+				if (totalSeconds <= 5) {
+					dayInfo.IncrementMissedCallCount(
+						SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostSelf5sec);
+				} else if (totalSeconds > 5 && totalSeconds <= 10) {
+					dayInfo.IncrementMissedCallCount(
+						SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostSelf10sec);
+				} else if (totalSeconds > 10 && totalSeconds <= 15) {
+					dayInfo.IncrementMissedCallCount(
+						SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostSelf15sec);
+				} else if (totalSeconds > 15 && totalSeconds <= 20) {
+					dayInfo.IncrementMissedCallCount(
+						SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostSelf20sec);
+				} else if (totalSeconds > 20 && totalSeconds <= 25) {
+					dayInfo.IncrementMissedCallCount(
+						SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostSelf25sec);
+				} else if (totalSeconds > 25 && totalSeconds <= 30) {
+					dayInfo.IncrementMissedCallCount(
+						SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostSelf30sec);
+				}
+			}
+		}
+
+		private void ParseLineForSplp(string phoneNumbers, double totalSeconds, ref SpRecordFileInformation.DayInfo dayInfo) {
+			if (phoneNumbers.EndsWith("-> 601") || phoneNumbers.EndsWith("-> 611")) {
+				dayInfo.TotalIncoming++;
+
+				if (totalSeconds <= 5) {
+					dayInfo.IncrementMissedCallCount(
+						SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostSelf5sec);
+				} else if (totalSeconds > 5 && totalSeconds <= 10) {
+					dayInfo.IncrementMissedCallCount(
+						SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostSelf10sec);
+				} else if (totalSeconds > 10 && totalSeconds <= 15) {
+					dayInfo.IncrementMissedCallCount(
+						SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostSelf15sec);
+				} else if (totalSeconds > 15 && totalSeconds <= 20) {
+					dayInfo.IncrementMissedCallCount(
+						SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostSelf20sec);
+				} else if (totalSeconds > 20 && totalSeconds <= 25) {
+					dayInfo.IncrementMissedCallCount(
+						SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostSelf25sec);
+				} else if (totalSeconds > 25 && totalSeconds <= 30) {
+					dayInfo.IncrementMissedCallCount(
+						SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostSelf30sec);
+				}
+			} else if (phoneNumbers.EndsWith("-> 30400")) {
+				dayInfo.TotalRedirected++;
+
+				if (totalSeconds <= 5) {
+					dayInfo.IncrementMissedCallCount(
+						SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostRedirected5sec);
+				} else if (totalSeconds > 5 && totalSeconds <= 10) {
+					dayInfo.IncrementMissedCallCount(
+						SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostRedirected10sec);
+				} else if (totalSeconds > 10 && totalSeconds <= 15) {
+					dayInfo.IncrementMissedCallCount(
+						SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostRedirected15sec);
+				} else if (totalSeconds > 15 && totalSeconds <= 20) {
+					dayInfo.IncrementMissedCallCount(
+						SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostRedirected20sec);
+				} else if (totalSeconds > 20 && totalSeconds <= 25) {
+					dayInfo.IncrementMissedCallCount(
+						SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostRedirected25sec);
+				} else if (totalSeconds > 25 && totalSeconds <= 30) {
+					dayInfo.IncrementMissedCallCount(
+						SpRecordFileInformation.DayInfo.MissedCallType.ConditionalyLostRedirected30sec);
+				}
+			}
 		}
 
 		private bool IsAnalysingAMissedCallSucceed(
