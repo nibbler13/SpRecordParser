@@ -117,7 +117,7 @@ namespace SpRecordParser {
 					string[] valuesTotal = new string[] {
 						"=SUM(B3:B" + (row - 1) + ")",
 						"=SUM(C3:C" + (row - 1) + ")",
-						"=SUM(D3:D" + (row - 1) + ")",
+						"=C" + row + "/B" + row,
 						"=SUM(E3:E" + (row - 1) + ")",
 						"=SUM(F3:F" + (row - 1) + ")",
 						"=SUM(G3:G" + (row - 1) + ")",
@@ -132,7 +132,7 @@ namespace SpRecordParser {
 						"=SUM(P3:P" + (row - 1) + ")",
 						"=SUM(Q3:Q" + (row - 1) + ")",
 						"=SUM(R3:R" + (row - 1) + ")",
-						"=S" + row + "/S" + row
+						"=R" + row + "/B" + row
 					};
 
 					int columnTotal = 2;
